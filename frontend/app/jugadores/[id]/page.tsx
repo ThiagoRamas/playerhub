@@ -185,7 +185,7 @@ export default function PlayerPage() {
         <>
           <section className="profile-hero">
             <div className="profile-inner">
-              <a className="back-link" href="/">← Volver al plantel</a>
+              <a className="back-link" href={player.current_clubs[0] ? `/clubes/${player.current_clubs[0].id}` : "/"}>← Volver al plantel</a>
               <div className="profile-layout">
                 <div className="profile-photo">
                   {player.image_url ? <img src={player.image_url} alt={`Foto de ${player.display_name}`} /> : <span>{player.display_name.slice(0, 2)}</span>}
@@ -195,7 +195,7 @@ export default function PlayerPage() {
                   <h1>{player.display_name}</h1>
                   <p className="full-name">{player.full_name ?? player.display_name}</p>
                   <div className="current-clubs">
-                    {player.current_clubs.map((club) => <span key={club.id}>{club.name}{club.membership_type === "LOAN" ? " · A préstamo" : ""}</span>)}
+                    {player.current_clubs.map((club) => <a href={`/clubes/${club.id}`} key={club.id}>{club.name}{club.membership_type === "LOAN" ? " · A préstamo" : ""}</a>)}
                   </div>
                 </div>
                 <div className="profile-value"><span>Valor de mercado</span><strong>{formatMoney(player.latest_market_value)}</strong><small>Última cotización registrada</small></div>

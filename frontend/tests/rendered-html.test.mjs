@@ -27,11 +27,13 @@ test("renderiza la portada de PlayerHub en español", async () => {
 });
 
 test("elimina la vista temporal de la plantilla", async () => {
-  const [page, layout] = await Promise.all([
+  const [page, layout, clubView] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/club-view.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /Plantel y préstamos/);
+  assert.match(page, /ClubView/);
+  assert.match(clubView, /Plantel y préstamos/);
   assert.match(layout, /lang="es-AR"/);
   await assert.rejects(access(new URL("../app/_sites-preview", root)));
 });
@@ -42,15 +44,34 @@ test("renderiza la ruta individual de un jugador", async () => {
   const html = await response.text();
   assert.match(html, /Preparando la ficha del jugador/);
 
-  const [home, playerPage] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  const [clubView, playerPage] = await Promise.all([
+    readFile(new URL("../app/components/club-view.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(home, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
+  assert.match(clubView, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
   assert.match(playerPage, /Historial del jugador/);
   assert.match(playerPage, /Valor de mercado/);
   assert.match(playerPage, /Transferencias/);
   assert.match(playerPage, /Lesiones/);
   assert.match(playerPage, /partido ausente/);
   assert.match(playerPage, /partidos ausentes/);
+});
+
+test("renderiza la ruta individual de un club y conecta la navegación", async () => {
+  const response = await render("/clubes/1");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Preparando la ficha del club/);
+
+  const [home, clubPage, clubView, playerPage] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/club-view.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(home, /href=\{`\/clubes\/\$\{result\.id\}`\}/);
+  assert.match(clubPage, /ClubView club=\{club\} squad=\{squad\}/);
+  assert.match(clubView, /Plantel y préstamos/);
+  assert.match(clubView, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
+  assert.match(playerPage, /href=\{`\/clubes\/\$\{club\.id\}`\}/);
 });

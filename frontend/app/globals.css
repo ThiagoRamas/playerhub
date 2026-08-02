@@ -31,8 +31,8 @@ img { display:block; max-width:100%; }
 .search button:hover { background:var(--red-dark); }
 .search button:disabled { cursor:wait; opacity:.62; }
 .search-results { max-width:670px; margin-top:8px; padding:8px; display:grid; gap:4px; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 18px 42px rgba(20,38,56,.12); }
-.search-results button { padding:12px 14px; display:flex; justify-content:space-between; border:0; border-radius:9px; background:transparent; cursor:pointer; text-align:left; }
-.search-results button:hover { background:#f4f5f5; }
+.search-results a { padding:12px 14px; display:flex; justify-content:space-between; border-radius:9px; background:transparent; cursor:pointer; text-align:left; }
+.search-results a:hover { background:#f4f5f5; }
 .search-results span { font-weight:700; }
 .search-results small { color:var(--muted); }
 .hero-card { width:min(100%,330px); aspect-ratio:.84; justify-self:end; padding:34px; position:relative; display:flex; flex-direction:column; justify-content:flex-end; color:#fff; background:var(--navy); border-radius:28px 28px 28px 4px; box-shadow:20px 25px 0 rgba(215,25,32,.95); transform:rotate(2deg); overflow:hidden; }
@@ -47,6 +47,10 @@ img { display:block; max-width:100%; }
 
 .notice { margin:24px auto -8px; width:min(1120px,calc(100% - 44px)); padding:15px 18px; border:1px solid #e4b9bb; border-radius:12px; background:#fff3f3; color:#8d181c; }
 .club-section { width:min(1180px,calc(100% - 44px)); margin:0 auto; padding:72px 0 88px; }
+.club-page { min-height:100vh; }
+.club-page-section { min-height:calc(100vh - 76px); }
+.club-back-link { margin:0 0 34px; display:inline-flex; color:var(--muted); font-size:13px; font-weight:750; }
+.club-back-link:hover,.club-heading h2 a:hover { color:var(--red); }
 .loading-panel { min-height:320px; display:grid; place-items:center; align-content:center; gap:18px; color:var(--muted); }
 .loader { width:42px; height:42px; border:3px solid #d9dddf; border-top-color:var(--red); border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
@@ -145,7 +149,8 @@ footer p { margin:0; }
 .profile-copy h1 { margin:13px 0 6px; font-size:clamp(48px,6vw,78px); line-height:.95; letter-spacing:-.065em; }
 .full-name { margin:0; color:rgba(255,255,255,.6); font-size:16px; }
 .current-clubs { margin-top:24px; display:flex; gap:8px; flex-wrap:wrap; }
-.current-clubs span { padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:9px; color:rgba(255,255,255,.86); font-size:13px; }
+.current-clubs a,.current-clubs span { padding:9px 12px; border:1px solid rgba(255,255,255,.16); border-radius:9px; color:rgba(255,255,255,.86); font-size:13px; }
+.current-clubs a:hover { border-color:rgba(255,255,255,.45); color:#fff; }
 .profile-value { min-width:230px; padding:24px; display:grid; gap:7px; background:#fff; color:var(--ink); border-radius:18px 18px 18px 4px; box-shadow:14px 14px 0 var(--red); }
 .profile-value span,.profile-value small { color:var(--muted); font-size:11px; }
 .profile-value strong { font-size:29px; letter-spacing:-.04em; }
