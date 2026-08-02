@@ -1,0 +1,2 @@
+"""PlayerHub REST API."""
+

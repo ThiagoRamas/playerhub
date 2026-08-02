@@ -50,6 +50,32 @@ docker compose --profile tools run --rm etl load-player-history
 
 La carga histórica también es idempotente y registra inserciones y actualizaciones por cada CSV.
 
+## API local
+
+```powershell
+docker compose up -d backend
+```
+
+La API queda disponible en `http://localhost:8000`, con documentación interactiva en `http://localhost:8000/docs`.
+
+Pruebas de integración:
+
+```powershell
+docker compose run --rm backend python -m pytest -q
+```
+
+Endpoints iniciales:
+
+- `GET /health`
+- `GET /api/v1/clubs?search=Independiente`
+- `GET /api/v1/clubs/{id}`
+- `GET /api/v1/clubs/{id}/squad`
+- `GET /api/v1/players/{id}`
+- `GET /api/v1/players/{id}/performances`
+- `GET /api/v1/players/{id}/market-values`
+- `GET /api/v1/players/{id}/transfers`
+- `GET /api/v1/players/{id}/injuries`
+
 ## Documentación
 
 - `docs/domain-model.md`: entidades y reglas del dominio.
