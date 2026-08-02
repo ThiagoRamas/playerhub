@@ -1,0 +1,42 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: playerhub-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-playerhub}
+      POSTGRES_USER: ${POSTGRES_USER:-playerhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-playerhub_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - playerhub_postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-playerhub} -d ${POSTGRES_DB:-playerhub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  etl:
+    build:
+      context: ./etl
+    environment:
+      PLAYERHUB_DATABASE_URL: postgresql://${POSTGRES_USER:-playerhub}:${POSTGRES_PASSWORD:-playerhub_dev}@database:5432/${POSTGRES_DB:-playerhub}
+      PLAYERHUB_DATASET_ROOT: /data/raw
+      PLAYERHUB_DATA_AS_OF: ${PLAYERHUB_DATA_AS_OF:-2025-09-13}
+      PLAYERHUB_TARGET_CLUB_ID: ${PLAYERHUB_TARGET_CLUB_ID:-1234}
+    volumes:
+      - type: bind
+        source: ${PLAYERHUB_DATASET_PATH}
+        target: /data/raw
+        read_only: true
+    depends_on:
+      database:
+        condition: service_healthy
+    profiles: ["tools"]
+
+volumes:
+  playerhub_postgres_data:
+    name: playerhub_postgres_data
