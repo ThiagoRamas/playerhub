@@ -13,16 +13,21 @@ from ..schemas import (
 )
 
 
-router = APIRouter(prefix="/players", tags=["players"])
+router = APIRouter(prefix="/players", tags=["Jugadores"])
 DatabaseConnection = Annotated[Connection, Depends(get_connection)]
 
 
 def require_player(connection: Connection, player_id: int) -> None:
     if connection.execute("SELECT 1 FROM players WHERE id = %s", (player_id,)).fetchone() is None:
-        raise HTTPException(status_code=404, detail="Player not found")
+        raise HTTPException(status_code=404, detail="Jugador no encontrado")
 
 
-@router.get("/{player_id}", response_model=PlayerDetail)
+@router.get(
+    "/{player_id}",
+    response_model=PlayerDetail,
+    summary="Ver un jugador",
+    description="Devuelve el perfil del jugador, su posición, nacionalidades, clubes y valor actual.",
+)
 def get_player(player_id: int, connection: DatabaseConnection) -> dict:
     player = connection.execute(
         """
@@ -51,7 +56,7 @@ def get_player(player_id: int, connection: DatabaseConnection) -> dict:
         (player_id,),
     ).fetchone()
     if player is None:
-        raise HTTPException(status_code=404, detail="Player not found")
+        raise HTTPException(status_code=404, detail="Jugador no encontrado")
 
     player["current_clubs"] = connection.execute(
         """
@@ -66,7 +71,12 @@ def get_player(player_id: int, connection: DatabaseConnection) -> dict:
     return player
 
 
-@router.get("/{player_id}/performances", response_model=list[PerformanceItem])
+@router.get(
+    "/{player_id}/performances",
+    response_model=list[PerformanceItem],
+    summary="Ver rendimientos",
+    description="Lista los rendimientos del jugador por temporada, club y competencia.",
+)
 def get_performances(player_id: int, connection: DatabaseConnection) -> list[dict]:
     require_player(connection, player_id)
     return connection.execute(
@@ -85,7 +95,12 @@ def get_performances(player_id: int, connection: DatabaseConnection) -> list[dic
     ).fetchall()
 
 
-@router.get("/{player_id}/market-values", response_model=list[MarketValueItem])
+@router.get(
+    "/{player_id}/market-values",
+    response_model=list[MarketValueItem],
+    summary="Ver valores de mercado",
+    description="Devuelve la evolución histórica del valor de mercado del jugador.",
+)
 def get_market_values(player_id: int, connection: DatabaseConnection) -> list[dict]:
     require_player(connection, player_id)
     return connection.execute(
@@ -97,7 +112,12 @@ def get_market_values(player_id: int, connection: DatabaseConnection) -> list[di
     ).fetchall()
 
 
-@router.get("/{player_id}/transfers", response_model=list[TransferItem])
+@router.get(
+    "/{player_id}/transfers",
+    response_model=list[TransferItem],
+    summary="Ver transferencias",
+    description="Lista los movimientos del jugador entre clubes a lo largo de su carrera.",
+)
 def get_transfers(player_id: int, connection: DatabaseConnection) -> list[dict]:
     require_player(connection, player_id)
     return connection.execute(
@@ -117,7 +137,12 @@ def get_transfers(player_id: int, connection: DatabaseConnection) -> list[dict]:
     ).fetchall()
 
 
-@router.get("/{player_id}/injuries", response_model=list[InjuryItem])
+@router.get(
+    "/{player_id}/injuries",
+    response_model=list[InjuryItem],
+    summary="Ver lesiones",
+    description="Lista las lesiones registradas y el tiempo de ausencia del jugador.",
+)
 def get_injuries(player_id: int, connection: DatabaseConnection) -> list[dict]:
     require_player(connection, player_id)
     return connection.execute(
@@ -131,4 +156,3 @@ def get_injuries(player_id: int, connection: DatabaseConnection) -> list[dict]:
         """,
         (player_id,),
     ).fetchall()
-

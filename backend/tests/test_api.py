@@ -40,5 +40,18 @@ def test_health_and_independiente_vertical_slice(client: TestClient) -> None:
 
 
 def test_missing_entities_return_404(client: TestClient) -> None:
-    assert client.get("/api/v1/clubs/999999999").status_code == 404
-    assert client.get("/api/v1/players/999999999").status_code == 404
+    missing_club = client.get("/api/v1/clubs/999999999")
+    missing_player = client.get("/api/v1/players/999999999")
+
+    assert missing_club.status_code == 404
+    assert missing_club.json() == {"detail": "Club no encontrado"}
+    assert missing_player.status_code == 404
+    assert missing_player.json() == {"detail": "Jugador no encontrado"}
+
+
+def test_openapi_uses_spanish_product_language(client: TestClient) -> None:
+    schema = client.get("/openapi.json").json()
+
+    assert schema["info"]["title"] == "API de PlayerHub"
+    assert schema["paths"]["/api/v1/clubs"]["get"]["summary"] == "Buscar clubes"
+    assert schema["paths"]["/api/v1/players/{player_id}/injuries"]["get"]["summary"] == "Ver lesiones"

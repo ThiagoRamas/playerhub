@@ -2,6 +2,8 @@
 
 PlayerHub es una plataforma de análisis de futbolistas y clubes construida sobre un modelo de datos propio. Los CSV de origen se procesan mediante un ETL y nunca son consultados directamente por la aplicación.
 
+El idioma de la aplicación es español. Los códigos internos y los nombres de campos de la API se mantienen estables en inglés, pero la interfaz, los mensajes para usuarios y la documentación funcional se presentan en español.
+
 ## Arquitectura objetivo
 
 ```text
@@ -14,7 +16,7 @@ Dataset → ETL Python → PostgreSQL → FastAPI → React
 - Modelo de dominio documentado.
 - Esquema lógico PostgreSQL diseñado.
 - Primera migración disponible.
-- Backend, frontend y ETL pendientes.
+- El ETL piloto, la API y la primera interfaz web se encuentran implementados.
 
 ## Base de datos local
 
@@ -75,6 +77,16 @@ Endpoints iniciales:
 - `GET /api/v1/players/{id}/market-values`
 - `GET /api/v1/players/{id}/transfers`
 - `GET /api/v1/players/{id}/injuries`
+
+## Aplicación web
+
+La interfaz de PlayerHub está disponible en español e incluye búsqueda de clubes, resumen del plantel, valor de mercado y filtros para jugadores propios, incorporados a préstamo y cedidos.
+
+```powershell
+docker compose up -d --build frontend
+```
+
+Luego abrir `http://localhost:3000`.
 
 ## Documentación
 

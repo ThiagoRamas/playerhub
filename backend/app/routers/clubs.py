@@ -7,15 +7,26 @@ from ..database import get_connection
 from ..schemas import ClubDetail, ClubSummary, SquadMember
 
 
-router = APIRouter(prefix="/clubs", tags=["clubs"])
+router = APIRouter(prefix="/clubs", tags=["Clubes"])
 DatabaseConnection = Annotated[Connection, Depends(get_connection)]
 
 
-@router.get("", response_model=list[ClubSummary])
+@router.get(
+    "",
+    response_model=list[ClubSummary],
+    summary="Buscar clubes",
+    description="Busca clubes por nombre y devuelve primero las coincidencias más cercanas.",
+)
 def search_clubs(
     connection: DatabaseConnection,
-    search: Annotated[str, Query(min_length=2, max_length=100)],
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    search: Annotated[
+        str,
+        Query(min_length=2, max_length=100, description="Nombre o parte del nombre del club."),
+    ],
+    limit: Annotated[
+        int,
+        Query(ge=1, le=100, description="Cantidad máxima de resultados."),
+    ] = 20,
 ) -> list[dict]:
     return connection.execute(
         """
@@ -30,7 +41,12 @@ def search_clubs(
     ).fetchall()
 
 
-@router.get("/{club_id}", response_model=ClubDetail)
+@router.get(
+    "/{club_id}",
+    response_model=ClubDetail,
+    summary="Ver un club",
+    description="Devuelve la información general de un club y su cantidad de jugadores vinculados.",
+)
 def get_club(club_id: int, connection: DatabaseConnection) -> dict:
     club = connection.execute(
         """
@@ -46,15 +62,23 @@ def get_club(club_id: int, connection: DatabaseConnection) -> dict:
         (club_id,),
     ).fetchone()
     if club is None:
-        raise HTTPException(status_code=404, detail="Club not found")
+        raise HTTPException(status_code=404, detail="Club no encontrado")
     return club
 
 
-@router.get("/{club_id}/squad", response_model=list[SquadMember])
+@router.get(
+    "/{club_id}/squad",
+    response_model=list[SquadMember],
+    summary="Ver el plantel de un club",
+    description=(
+        "Devuelve los jugadores del plantel y diferencia a quienes están en el club, "
+        "a préstamo o cedidos a otra institución."
+    ),
+)
 def get_squad(club_id: int, connection: DatabaseConnection) -> list[dict]:
     exists = connection.execute("SELECT 1 FROM clubs WHERE id = %s", (club_id,)).fetchone()
     if exists is None:
-        raise HTTPException(status_code=404, detail="Club not found")
+        raise HTTPException(status_code=404, detail="Club no encontrado")
 
     return connection.execute(
         """
@@ -91,4 +115,3 @@ def get_squad(club_id: int, connection: DatabaseConnection) -> list[dict]:
         """,
         (club_id,),
     ).fetchall()
-
