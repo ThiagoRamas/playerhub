@@ -6,7 +6,9 @@ from playerhub_etl.normalize import (
     optional_int,
     position_code,
     preferred_foot,
+    season_values,
     split_citizenships,
+    transfer_type,
 )
 
 
@@ -32,6 +34,17 @@ class NormalizeTest(unittest.TestCase):
         self.assertEqual(career_status("Retired"), "RETIRED")
         self.assertEqual(career_status("CA Independiente"), "ACTIVE")
         self.assertEqual(career_status("Unknown"), "UNKNOWN")
+
+    def test_normalizes_split_and_calendar_seasons(self) -> None:
+        self.assertEqual(season_values("24/25"), ("24/25", 2024, 2025, "SPLIT_YEAR"))
+        self.assertEqual(season_values("1999"), ("1999", 1999, 1999, "CALENDAR_YEAR"))
+
+    def test_rejects_invalid_season_and_transfer_type(self) -> None:
+        with self.assertRaises(ValueError):
+            season_values("2024-25")
+        self.assertEqual(transfer_type("Return from loan"), "LOAN_RETURN")
+        with self.assertRaises(ValueError):
+            transfer_type("Trade")
 
 
 if __name__ == "__main__":

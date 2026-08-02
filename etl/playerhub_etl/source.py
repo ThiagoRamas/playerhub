@@ -7,6 +7,10 @@ from typing import Iterator
 FILE_PATHS = {
     "profiles": "player_profiles/player_profiles.csv",
     "team_details": "team_details/team_details.csv",
+    "performances": "player_performances/player_performances.csv",
+    "market_values": "player_market_value/player_market_value.csv",
+    "transfers": "transfer_history/transfer_history.csv",
+    "injuries": "player_injuries/player_injuries.csv",
 }
 
 
@@ -51,3 +55,8 @@ class DatasetSource:
             for row in self.rows("profiles")
             if row["current_club_id"] == target or row["on_loan_from_club_id"] == target
         ]
+
+    def rows_for_players(self, key: str, player_ids: set[int]) -> Iterator[dict[str, str]]:
+        for row in self.rows(key):
+            if int(row["player_id"]) in player_ids:
+                yield row

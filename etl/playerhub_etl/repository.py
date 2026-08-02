@@ -143,6 +143,38 @@ class Repository:
         ).fetchone()
         return int(row["id"])
 
+    def upsert_season(
+        self, label: str, start_year: int, end_year: int, calendar_type: str
+    ) -> int:
+        row = self.connection.execute(
+            """
+            INSERT INTO seasons (label, start_year, end_year, calendar_type)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (label, start_year, end_year) DO UPDATE SET
+                calendar_type = EXCLUDED.calendar_type
+            RETURNING id
+            """,
+            (label, start_year, end_year, calendar_type),
+        ).fetchone()
+        return int(row["id"])
+
+    def upsert_competition(
+        self, external_id: str, name: str, run_id: int
+    ) -> int:
+        row = self.connection.execute(
+            """
+            INSERT INTO competitions
+                (source_external_id, name, is_complete, source_etl_run_id)
+            VALUES (%s, %s, FALSE, %s)
+            ON CONFLICT (source_external_id) DO UPDATE SET
+                name = EXCLUDED.name,
+                source_etl_run_id = EXCLUDED.source_etl_run_id
+            RETURNING id
+            """,
+            (external_id, name, run_id),
+        ).fetchone()
+        return int(row["id"])
+
     def upsert_player(self, values: dict[str, Any]) -> int:
         row = self.connection.execute(
             """
@@ -244,6 +276,170 @@ class Repository:
                     for membership in memberships
                 ],
             )
+
+    def upsert_performance(self, values: dict[str, Any]) -> bool:
+        inserted = self.connection.execute(
+            """
+            INSERT INTO performances
+                (player_id, club_id, competition_id, season_id, squad_appearances,
+                 appearances, goals, assists, own_goals, substituted_in,
+                 substituted_out, yellow_cards, second_yellow_cards, red_cards,
+                 penalty_goals, minutes_played, goals_conceded, clean_sheets,
+                 source_etl_run_id)
+            VALUES
+                (%(player_id)s, %(club_id)s, %(competition_id)s, %(season_id)s,
+                 %(squad_appearances)s, %(appearances)s, %(goals)s, %(assists)s,
+                 %(own_goals)s, %(substituted_in)s, %(substituted_out)s,
+                 %(yellow_cards)s, %(second_yellow_cards)s, %(red_cards)s,
+                 %(penalty_goals)s, %(minutes_played)s, %(goals_conceded)s,
+                 %(clean_sheets)s, %(source_etl_run_id)s)
+            ON CONFLICT (player_id, club_id, competition_id, season_id) DO NOTHING
+            RETURNING id
+            """,
+            values,
+        ).fetchone()
+        if inserted:
+            return True
+
+        self.connection.execute(
+            """
+            UPDATE performances SET
+                squad_appearances = %(squad_appearances)s,
+                appearances = %(appearances)s,
+                goals = %(goals)s,
+                assists = %(assists)s,
+                own_goals = %(own_goals)s,
+                substituted_in = %(substituted_in)s,
+                substituted_out = %(substituted_out)s,
+                yellow_cards = %(yellow_cards)s,
+                second_yellow_cards = %(second_yellow_cards)s,
+                red_cards = %(red_cards)s,
+                penalty_goals = %(penalty_goals)s,
+                minutes_played = %(minutes_played)s,
+                goals_conceded = %(goals_conceded)s,
+                clean_sheets = %(clean_sheets)s,
+                source_etl_run_id = %(source_etl_run_id)s
+            WHERE player_id = %(player_id)s
+              AND club_id = %(club_id)s
+              AND competition_id = %(competition_id)s
+              AND season_id = %(season_id)s
+            """,
+            values,
+        )
+        return False
+
+    def upsert_market_value(self, values: dict[str, Any]) -> bool:
+        inserted = self.connection.execute(
+            """
+            INSERT INTO market_values
+                (player_id, valued_on, amount, currency_code, source_etl_run_id)
+            VALUES
+                (%(player_id)s, %(valued_on)s, %(amount)s, %(currency_code)s,
+                 %(source_etl_run_id)s)
+            ON CONFLICT (player_id, valued_on) DO NOTHING
+            RETURNING id
+            """,
+            values,
+        ).fetchone()
+        if inserted:
+            return True
+
+        self.connection.execute(
+            """
+            UPDATE market_values SET
+                amount = %(amount)s,
+                currency_code = %(currency_code)s,
+                source_etl_run_id = %(source_etl_run_id)s
+            WHERE player_id = %(player_id)s AND valued_on = %(valued_on)s
+            """,
+            values,
+        )
+        return False
+
+    def upsert_transfer(self, values: dict[str, Any]) -> bool:
+        inserted = self.connection.execute(
+            """
+            INSERT INTO transfers
+                (player_id, season_id, transfer_date, from_club_id, to_club_id,
+                 transfer_type, from_career_state, to_career_state,
+                 market_value_amount, fee_amount, currency_code, source_fingerprint,
+                 source_etl_run_id)
+            VALUES
+                (%(player_id)s, %(season_id)s, %(transfer_date)s, %(from_club_id)s,
+                 %(to_club_id)s, %(transfer_type)s, %(from_career_state)s,
+                 %(to_career_state)s, %(market_value_amount)s, %(fee_amount)s,
+                 %(currency_code)s, %(source_fingerprint)s, %(source_etl_run_id)s)
+            ON CONFLICT (source_fingerprint) DO NOTHING
+            RETURNING id
+            """,
+            values,
+        ).fetchone()
+        if inserted:
+            return True
+
+        self.connection.execute(
+            """
+            UPDATE transfers SET
+                season_id = %(season_id)s,
+                transfer_date = %(transfer_date)s,
+                from_club_id = %(from_club_id)s,
+                to_club_id = %(to_club_id)s,
+                transfer_type = %(transfer_type)s,
+                from_career_state = %(from_career_state)s,
+                to_career_state = %(to_career_state)s,
+                market_value_amount = %(market_value_amount)s,
+                fee_amount = %(fee_amount)s,
+                currency_code = %(currency_code)s,
+                source_etl_run_id = %(source_etl_run_id)s
+            WHERE source_fingerprint = %(source_fingerprint)s
+            """,
+            values,
+        )
+        return False
+
+    def upsert_injury(self, values: dict[str, Any]) -> bool:
+        inserted = self.connection.execute(
+            """
+            INSERT INTO injuries
+                (player_id, season_id, reason, started_on, ended_on, days_missed,
+                 games_missed, source_fingerprint, source_etl_run_id)
+            VALUES
+                (%(player_id)s, %(season_id)s, %(reason)s, %(started_on)s,
+                 %(ended_on)s, %(days_missed)s, %(games_missed)s,
+                 %(source_fingerprint)s, %(source_etl_run_id)s)
+            ON CONFLICT (source_fingerprint) DO NOTHING
+            RETURNING id
+            """,
+            values,
+        ).fetchone()
+        if inserted:
+            return True
+
+        self.connection.execute(
+            """
+            UPDATE injuries SET
+                season_id = %(season_id)s,
+                reason = %(reason)s,
+                started_on = %(started_on)s,
+                ended_on = %(ended_on)s,
+                days_missed = %(days_missed)s,
+                games_missed = %(games_missed)s,
+                source_etl_run_id = %(source_etl_run_id)s
+            WHERE source_fingerprint = %(source_fingerprint)s
+            """,
+            values,
+        )
+        return False
+
+    def player_ids_by_external_id(self, external_ids: set[int]) -> dict[int, int]:
+        rows = self.connection.execute(
+            """
+            SELECT id, source_external_id FROM players
+            WHERE source_external_id = ANY(%s)
+            """,
+            (list(external_ids),),
+        ).fetchall()
+        return {int(row["source_external_id"]): int(row["id"]) for row in rows}
 
     def commit(self) -> None:
         self.connection.commit()

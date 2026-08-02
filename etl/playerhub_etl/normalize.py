@@ -38,6 +38,21 @@ FOOT_CODES = {
     "both": "BOTH",
 }
 
+TRANSFER_TYPE_CODES = {
+    "Transfer": "TRANSFER",
+    "Loan": "LOAN",
+    "Return from loan": "LOAN_RETURN",
+    "Draft": "DRAFT",
+}
+
+CAREER_STATE_CODES = {
+    "Without Club": "WITHOUT_CLUB",
+    "Retired": "RETIRED",
+    "Career break": "CAREER_BREAK",
+    "Unknown": "UNKNOWN",
+    "---": "UNKNOWN",
+}
+
 
 def optional_text(value: str | None) -> str | None:
     if value is None:
@@ -83,6 +98,37 @@ def split_citizenships(value: str | None) -> list[str]:
 
 def position_code(value: str | None) -> str | None:
     return POSITION_CODES.get((value or "").strip())
+
+
+def season_values(label: str) -> tuple[str, int, int, str]:
+    cleaned = label.strip()
+    split_match = re.fullmatch(r"(\d{2})/(\d{2})", cleaned)
+    if split_match:
+        start_short, end_short = (int(value) for value in split_match.groups())
+        start_year = 1900 + start_short if start_short >= 50 else 2000 + start_short
+        end_year = 1900 + end_short if end_short >= 50 else 2000 + end_short
+        if end_year < start_year:
+            end_year += 100
+        if end_year != start_year + 1:
+            raise ValueError(f"Invalid split season: {label}")
+        return cleaned, start_year, end_year, "SPLIT_YEAR"
+
+    if re.fullmatch(r"\d{4}", cleaned):
+        year = int(cleaned)
+        return cleaned, year, year, "CALENDAR_YEAR"
+
+    raise ValueError(f"Unsupported season label: {label}")
+
+
+def transfer_type(value: str | None) -> str:
+    cleaned = optional_text(value)
+    if cleaned not in TRANSFER_TYPE_CODES:
+        raise ValueError(f"Unsupported transfer type: {value}")
+    return TRANSFER_TYPE_CODES[cleaned]
+
+
+def career_state(value: str | None) -> str | None:
+    return CAREER_STATE_CODES.get((value or "").strip())
 
 
 def fingerprint(payload: Any) -> str:

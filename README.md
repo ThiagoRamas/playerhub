@@ -42,6 +42,14 @@ docker compose --profile tools run --rm etl load-club-snapshot
 
 Los CSV se montan como solo lectura desde `PLAYERHUB_DATASET_PATH`. El importador puede ejecutarse nuevamente sin duplicar entidades ni membresías.
 
+Después de cargar la instantánea del club, el segundo comando importa para esos jugadores sus rendimientos, valores de mercado, transferencias y lesiones:
+
+```powershell
+docker compose --profile tools run --rm etl load-player-history
+```
+
+La carga histórica también es idempotente y registra inserciones y actualizaciones por cada CSV.
+
 ## Documentación
 
 - `docs/domain-model.md`: entidades y reglas del dominio.
