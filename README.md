@@ -52,6 +52,29 @@ docker compose --profile tools run --rm etl load-player-history
 
 La carga histórica también es idempotente y registra inserciones y actualizaciones por cada CSV.
 
+### Ampliar la base a otros clubes
+
+El catálogo del propio dataset permite encontrar clubes que tienen información suficiente para cargar un plantel. Por ejemplo:
+
+```powershell
+docker compose --profile tools run --rm etl list-source-clubs --country Argentina --search River
+```
+
+El resultado incluye el `club_id` y la cantidad de perfiles disponibles. Para cargar la ficha y todo el historial de uno o varios clubes en una sola ejecución:
+
+```powershell
+docker compose --profile tools run --rm etl load-club-data --club-id 209
+docker compose --profile tools run --rm etl load-club-data --club-id 209 --club-id 189
+```
+
+Los identificadores `209` y `189` corresponden a River Plate y Boca Juniors en esta versión del dataset. `--club-id` no modifica `.env`; si no se incluye, los comandos existentes siguen usando `PLAYERHUB_TARGET_CLUB_ID`. Las cargas pueden repetirse sin generar duplicados.
+
+Pruebas del importador:
+
+```powershell
+docker compose --profile tools run --rm --entrypoint python etl -m unittest discover -s tests -v
+```
+
 ## API local
 
 ```powershell

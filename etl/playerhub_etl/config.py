@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 import os
 from pathlib import Path
@@ -10,6 +10,11 @@ class Settings:
     dataset_root: Path
     data_as_of: date
     target_club_id: int
+
+    def for_club(self, club_id: int) -> "Settings":
+        if club_id <= 0:
+            raise ValueError("Club ID must be a positive integer")
+        return replace(self, target_club_id=club_id)
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -29,4 +34,3 @@ class Settings:
             data_as_of=data_as_of,
             target_club_id=target_club_id,
         )
-

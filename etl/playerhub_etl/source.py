@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 import hashlib
 from pathlib import Path
 from typing import Iterator
@@ -55,6 +56,44 @@ class DatasetSource:
             for row in self.rows("profiles")
             if row["current_club_id"] == target or row["on_loan_from_club_id"] == target
         ]
+
+    def available_clubs(
+        self,
+        search: str | None = None,
+        country: str | None = None,
+        limit: int = 20,
+    ) -> list[dict[str, str | int]]:
+        players_by_club: dict[int, set[int]] = defaultdict(set)
+        for row in self.rows("profiles"):
+            player_id = int(row["player_id"])
+            for field in ("current_club_id", "on_loan_from_club_id"):
+                raw_club_id = row[field].strip()
+                if raw_club_id.isdigit():
+                    players_by_club[int(raw_club_id)].add(player_id)
+
+        search_value = search.casefold().strip() if search else None
+        country_value = country.casefold().strip() if country else None
+        clubs: list[dict[str, str | int]] = []
+        for row in self.rows("team_details"):
+            club_id = int(row["club_id"])
+            player_count = len(players_by_club.get(club_id, set()))
+            if player_count == 0:
+                continue
+            if search_value and search_value not in row["club_name"].casefold():
+                continue
+            if country_value and country_value != row["country_name"].casefold():
+                continue
+            clubs.append(
+                {
+                    "club_id": club_id,
+                    "club_name": row["club_name"],
+                    "country_name": row["country_name"],
+                    "players": player_count,
+                }
+            )
+
+        clubs.sort(key=lambda club: (-int(club["players"]), str(club["club_name"])))
+        return clubs[:limit]
 
     def rows_for_players(self, key: str, player_ids: set[int]) -> Iterator[dict[str, str]]:
         for row in self.rows(key):
