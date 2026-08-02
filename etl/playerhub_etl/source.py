@@ -49,6 +49,13 @@ class DatasetSource:
         target = str(external_id)
         return next((row for row in self.rows("team_details") if row["club_id"] == target), None)
 
+    def club_details(self, external_ids: set[int]) -> dict[int, dict[str, str]]:
+        return {
+            club_id: row
+            for row in self.rows("team_details")
+            if (club_id := int(row["club_id"])) in external_ids
+        }
+
     def club_snapshot_profiles(self, external_id: int) -> list[dict[str, str]]:
         target = str(external_id)
         return [
@@ -57,11 +64,25 @@ class DatasetSource:
             if row["current_club_id"] == target or row["on_loan_from_club_id"] == target
         ]
 
+    def club_snapshot_profiles_by_club(
+        self, external_ids: set[int]
+    ) -> dict[int, list[dict[str, str]]]:
+        profiles_by_club = {club_id: [] for club_id in external_ids}
+        for row in self.rows("profiles"):
+            referenced_clubs = {
+                int(raw_id)
+                for field in ("current_club_id", "on_loan_from_club_id")
+                if (raw_id := row[field].strip()).isdigit()
+            }
+            for club_id in referenced_clubs & external_ids:
+                profiles_by_club[club_id].append(row)
+        return profiles_by_club
+
     def available_clubs(
         self,
         search: str | None = None,
         country: str | None = None,
-        limit: int = 20,
+        limit: int | None = 20,
     ) -> list[dict[str, str | int]]:
         players_by_club: dict[int, set[int]] = defaultdict(set)
         for row in self.rows("profiles"):
@@ -93,7 +114,7 @@ class DatasetSource:
             )
 
         clubs.sort(key=lambda club: (-int(club["players"]), str(club["club_name"])))
-        return clubs[:limit]
+        return clubs if limit is None else clubs[:limit]
 
     def rows_for_players(self, key: str, player_ids: set[int]) -> Iterator[dict[str, str]]:
         for row in self.rows(key):

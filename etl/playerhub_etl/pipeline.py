@@ -32,14 +32,20 @@ def _club_reference(external_id: str, name: str) -> tuple[int, str] | None:
     return int(external_id), clean_entity_name(name, external_id)
 
 
-def load_club_snapshot(settings: Settings) -> LoadSummary:
-    source = DatasetSource(settings.dataset_root)
+def load_club_snapshot(
+    settings: Settings,
+    *,
+    source: DatasetSource | None = None,
+    profiles: list[dict[str, str]] | None = None,
+    detail: dict[str, str] | None = None,
+) -> LoadSummary:
+    source = source or DatasetSource(settings.dataset_root)
     source_fingerprint = source.fingerprint(("profiles", "team_details"))
-    profiles = source.club_snapshot_profiles(settings.target_club_id)
+    profiles = profiles if profiles is not None else source.club_snapshot_profiles(settings.target_club_id)
     if not profiles:
         raise ValueError(f"No profiles found for club {settings.target_club_id}")
 
-    detail = source.club_detail(settings.target_club_id)
+    detail = detail if detail is not None else source.club_detail(settings.target_club_id)
     if detail is None:
         raise ValueError(f"No team detail found for club {settings.target_club_id}")
 

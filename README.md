@@ -69,6 +69,20 @@ docker compose --profile tools run --rm etl load-club-data --club-id 209 --club-
 
 Los identificadores `209` y `189` corresponden a River Plate y Boca Juniors en esta versión del dataset. `--club-id` no modifica `.env`; si no se incluye, los comandos existentes siguen usando `PLAYERHUB_TARGET_CLUB_ID`. Las cargas pueden repetirse sin generar duplicados.
 
+Para ampliar automáticamente la cobertura sin indicar cada club, se puede cargar un país en lotes. Cada lote agrupa jugadores de varios clubes y recorre los archivos históricos una sola vez:
+
+```powershell
+docker compose --profile tools run --rm etl load-country --country Argentina --batch-size 20
+```
+
+Antes de una carga completa se recomienda validar un lote pequeño:
+
+```powershell
+docker compose --profile tools run --rm etl load-country --country Argentina --batch-size 3 --max-clubs 3
+```
+
+Si la ejecución se interrumpe, el mismo comando puede repetirse: las cargas terminadas quedan confirmadas y los registros existentes se actualizan sin duplicarse.
+
 Pruebas del importador:
 
 ```powershell

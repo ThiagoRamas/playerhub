@@ -66,6 +66,36 @@ class SourceCatalogTest(unittest.TestCase):
             self.assertEqual(len(clubs), 1)
             self.assertEqual(clubs[0]["club_id"], 209)
 
+    def test_groups_profiles_and_details_for_multiple_clubs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_rows(
+                root,
+                "profiles",
+                ["player_id", "current_club_id", "on_loan_from_club_id"],
+                [
+                    {"player_id": "1", "current_club_id": "209", "on_loan_from_club_id": ""},
+                    {"player_id": "2", "current_club_id": "189", "on_loan_from_club_id": "209"},
+                ],
+            )
+            self.write_rows(
+                root,
+                "team_details",
+                ["club_id", "club_name", "country_name"],
+                [
+                    {"club_id": "209", "club_name": "CA River Plate (209)", "country_name": "Argentina"},
+                    {"club_id": "189", "club_name": "CA Boca Juniors (189)", "country_name": "Argentina"},
+                ],
+            )
+
+            source = DatasetSource(root)
+            grouped = source.club_snapshot_profiles_by_club({209, 189})
+            details = source.club_details({209, 189})
+
+            self.assertEqual([row["player_id"] for row in grouped[209]], ["1", "2"])
+            self.assertEqual([row["player_id"] for row in grouped[189]], ["2"])
+            self.assertEqual(set(details), {209, 189})
+
 
 if __name__ == "__main__":
     unittest.main()

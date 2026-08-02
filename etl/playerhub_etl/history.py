@@ -37,6 +37,19 @@ def load_player_history(settings: Settings) -> HistorySummary:
     if not external_player_ids:
         raise ValueError(f"No profiles found for club {settings.target_club_id}")
 
+    return load_player_history_for_players(settings, external_player_ids, source=source)
+
+
+def load_player_history_for_players(
+    settings: Settings,
+    external_player_ids: set[int],
+    *,
+    source: DatasetSource | None = None,
+) -> HistorySummary:
+    if not external_player_ids:
+        raise ValueError("No player IDs were provided for history import")
+    source = source or DatasetSource(settings.dataset_root)
+
     rows_by_file = {
         key: list(source.rows_for_players(key, external_player_ids))
         for key in HISTORY_FILES
@@ -216,4 +229,3 @@ def load_player_history(settings: Settings) -> HistorySummary:
         transfers=len(rows_by_file["transfers"]),
         injuries=len(rows_by_file["injuries"]),
     )
-

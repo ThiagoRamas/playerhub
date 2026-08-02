@@ -11,6 +11,7 @@ COMMANDS = (
     "load-club-snapshot",
     "load-player-history",
     "load-club-data",
+    "load-country",
 )
 
 
@@ -51,6 +52,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=20,
         help="Cantidad máxima de clubes a mostrar (por defecto: 20).",
     )
+    parser.add_argument(
+        "--batch-size",
+        type=positive_int,
+        default=20,
+        help="Clubes procesados juntos en cada lote (por defecto: 20).",
+    )
+    parser.add_argument(
+        "--max-clubs",
+        type=positive_int,
+        help="Límite opcional de clubes para una carga de prueba.",
+    )
     return parser
 
 
@@ -76,6 +88,23 @@ def main() -> None:
             for club in clubs
         ]
         print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    if args.command == "load-country":
+        if not args.country:
+            parser = build_parser()
+            parser.error("load-country requiere --country")
+        from .batch import country_summary_payload, load_country
+
+        summary = load_country(
+            settings,
+            args.country,
+            search=args.search,
+            batch_size=args.batch_size,
+            max_clubs=args.max_clubs,
+            progress=lambda message: print(message, flush=True),
+        )
+        print(json.dumps(country_summary_payload(summary), indent=2, ensure_ascii=False))
         return
 
     club_ids = selected_club_ids(args, settings)

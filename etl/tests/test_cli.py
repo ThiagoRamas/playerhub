@@ -37,6 +37,14 @@ class CliTest(unittest.TestCase):
         self.assertEqual(args.country, "Argentina")
         self.assertEqual(args.limit, 5)
 
+    def test_country_load_accepts_batch_and_test_limits(self) -> None:
+        args = build_parser().parse_args(
+            ["load-country", "--country", "Argentina", "--batch-size", "10", "--max-clubs", "3"]
+        )
+        self.assertEqual(args.country, "Argentina")
+        self.assertEqual(args.batch_size, 10)
+        self.assertEqual(args.max_clubs, 3)
+
 
 if __name__ == "__main__":
     unittest.main()
