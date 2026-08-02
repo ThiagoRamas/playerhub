@@ -266,7 +266,7 @@ export default function Home() {
                 {filteredSquad.map((player) => {
                   const age = calculateAge(player.date_of_birth);
                   return (
-                    <article className="player-card" key={player.id}>
+                    <a className="player-card" key={player.id} href={`/jugadores/${player.id}`} aria-label={`Ver ficha de ${player.display_name}`}>
                       <div className="player-photo">
                         {player.image_url ? <img src={player.image_url} alt={`Foto de ${player.display_name}`} loading="lazy" /> : <span>{player.display_name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>}
                         <span className={`status status-${player.squad_status.toLowerCase()}`}>{statusLabels[player.squad_status]}</span>
@@ -276,7 +276,7 @@ export default function Home() {
                         <p>{player.citizenships.map(translateCountry).join(" · ") || "Nacionalidad sin informar"}{age !== null ? ` · ${age} años` : ""}</p>
                         <div className="market-value"><span>Valor de mercado</span><strong>{formatMarketValue(player.latest_market_value)}</strong></div>
                       </div>
-                    </article>
+                    </a>
                   );
                 })}
               </div>
