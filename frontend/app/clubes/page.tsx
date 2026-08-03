@@ -48,7 +48,7 @@ export default function ClubsPage() {
     <main className="catalog-page">
       <header className="site-header">
         <a className="brand" href="/" aria-label="PlayerHub, inicio"><span className="brand-mark">PH</span><span>PlayerHub</span></a>
-        <nav aria-label="Navegación principal"><a href="/clubes" aria-current="page">Clubes</a><a href="/#club">Destacado</a><span className="language-badge">ES</span></nav>
+        <nav aria-label="Navegación principal"><a href="/clubes" aria-current="page">Clubes</a><a href="/jugadores">Jugadores</a><span className="language-badge">ES</span></nav>
       </header>
 
       <section className="catalog-hero">

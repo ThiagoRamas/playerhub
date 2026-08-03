@@ -113,3 +113,23 @@ test("renderiza el catálogo de clubes y conecta la navegación", async () => {
   assert.match(clubPage, /Volver a todos los clubes/);
   assert.match(playerPage, /href="\/clubes"/);
 });
+
+test("renderiza el buscador general de jugadores", async () => {
+  const response = await render("/jugadores");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Encontrá a cualquier jugador/);
+  assert.match(html, /Empezá por un nombre/);
+
+  const [home, clubs, players, playerDetail] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(home, /href="\/jugadores"/);
+  assert.match(clubs, /href="\/jugadores"/);
+  assert.match(players, /api\/v1\/players\?search=/);
+  assert.match(players, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
+  assert.match(playerDetail, /href="\/jugadores"/);
+});

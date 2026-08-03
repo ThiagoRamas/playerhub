@@ -48,7 +48,7 @@ export default function ClubPage() {
     <main className="club-page">
       <header className="site-header">
         <a className="brand" href="/" aria-label="PlayerHub, inicio"><span className="brand-mark">PH</span><span>PlayerHub</span></a>
-        <nav aria-label="Navegación principal"><a href="/clubes">Todos los clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span></nav>
+        <nav aria-label="Navegación principal"><a href="/clubes">Todos los clubes</a><a href="/jugadores">Jugadores</a><span className="language-badge">ES</span></nav>
       </header>
 
       <section className="club-section club-page-section" aria-busy={loading}>

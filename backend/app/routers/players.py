@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg import Connection
 
 from ..database import get_connection
@@ -9,12 +9,67 @@ from ..schemas import (
     MarketValueItem,
     PerformanceItem,
     PlayerDetail,
+    PlayerSummary,
     TransferItem,
 )
 
 
 router = APIRouter(prefix="/players", tags=["Jugadores"])
 DatabaseConnection = Annotated[Connection, Depends(get_connection)]
+
+
+@router.get(
+    "",
+    response_model=list[PlayerSummary],
+    summary="Buscar jugadores",
+    description="Busca futbolistas por nombre o apellido y devuelve primero las coincidencias más cercanas.",
+)
+def search_players(
+    connection: DatabaseConnection,
+    search: Annotated[
+        str,
+        Query(min_length=2, max_length=100, description="Nombre o apellido del jugador."),
+    ],
+    limit: Annotated[
+        int,
+        Query(ge=1, le=50, description="Cantidad máxima de resultados."),
+    ] = 20,
+) -> list[dict]:
+    pattern = f"%{search}%"
+    return connection.execute(
+        """
+        SELECT p.id, p.display_name, p.image_url, p.date_of_birth,
+               pos.name AS position,
+               ARRAY(
+                   SELECT co.name
+                   FROM player_citizenships pc
+                   JOIN countries co ON co.id = pc.country_id
+                   WHERE pc.player_id = p.id
+                   ORDER BY co.name
+               ) AS citizenships,
+               ARRAY(
+                   SELECT c.name
+                   FROM player_club_memberships m
+                   JOIN clubs c ON c.id = m.club_id
+                   WHERE m.player_id = p.id AND m.is_current
+                   ORDER BY CASE WHEN m.membership_type = 'LOAN' THEN 0 ELSE 1 END, c.name
+               ) AS current_clubs,
+               (
+                   SELECT mv.amount
+                   FROM market_values mv
+                   WHERE mv.player_id = p.id
+                   ORDER BY mv.valued_on DESC
+                   LIMIT 1
+               ) AS latest_market_value
+        FROM players p
+        LEFT JOIN player_positions pp ON pp.player_id = p.id AND pp.is_primary
+        LEFT JOIN positions pos ON pos.id = pp.position_id
+        WHERE p.display_name ILIKE %s OR COALESCE(p.full_name, '') ILIKE %s
+        ORDER BY similarity(p.display_name, %s) DESC, p.display_name
+        LIMIT %s
+        """,
+        (pattern, pattern, search, limit),
+    ).fetchall()
 
 
 def require_player(connection: Connection, player_id: int) -> None:

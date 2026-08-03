@@ -43,6 +43,17 @@ class PlayerClub(BaseModel):
     is_current: bool
 
 
+class PlayerSummary(BaseModel):
+    id: int
+    display_name: str
+    image_url: str | None
+    date_of_birth: date | None
+    position: str | None
+    citizenships: list[str]
+    current_clubs: list[str]
+    latest_market_value: int | None
+
+
 class PlayerDetail(BaseModel):
     id: int
     display_name: str
@@ -99,4 +110,3 @@ class InjuryItem(BaseModel):
     ended_on: date | None
     days_missed: int | None
     games_missed: int | None
-

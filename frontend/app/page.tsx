@@ -79,7 +79,7 @@ export default function Home() {
           <span className="brand-mark">PH</span><span>PlayerHub</span>
         </a>
         <nav aria-label="Navegación principal">
-          <a href="/clubes">Clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span>
+          <a href="/clubes">Clubes</a><a href="/jugadores">Jugadores</a><span className="language-badge">ES</span>
         </nav>
       </header>
 
