@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { translateCountry } from "../../lib/translations";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -68,12 +69,6 @@ const positionLabels: Record<string, string> = {
   "Centre-Forward": "Delantero centro",
   "Second Striker": "Segundo delantero",
 };
-const countryLabels: Record<string, string> = {
-  Italy: "Italia",
-  Spain: "España",
-  Ukraine: "Ucrania",
-  "United States": "Estados Unidos",
-};
 const footLabels: Record<string, string> = { RIGHT: "Derecha", LEFT: "Izquierda", BOTH: "Ambas" };
 const statusLabels: Record<string, string> = { ACTIVE: "En actividad", RETIRED: "Retirado", DECEASED: "Fallecido" };
 const transferLabels: Record<string, string> = {
@@ -103,7 +98,6 @@ const numberFormatter = new Intl.NumberFormat("es-AR");
 const dateFormatter = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 
 function translatePosition(value: string | null) { return value ? positionLabels[value] ?? value : "Posición sin informar"; }
-function translateCountry(value: string) { return countryLabels[value] ?? value; }
 function translateInjury(value: string) { return injuryLabels[value.toLowerCase()] ?? value; }
 function formatMoney(value: number | null) { return value === null ? "Sin informar" : moneyFormatter.format(value); }
 function formatDate(value: string | null) { return value ? dateFormatter.format(new Date(`${value}T00:00:00`)) : "Sin fecha"; }

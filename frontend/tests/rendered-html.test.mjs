@@ -75,3 +75,20 @@ test("renderiza la ruta individual de un club y conecta la navegación", async (
   assert.match(clubView, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
   assert.match(playerPage, /href=\{`\/clubes\/\$\{club\.id\}`\}/);
 });
+
+test("centraliza y amplía los nombres de países en español", async () => {
+  const [home, clubView, playerPage, translations] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/club-view.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/translations.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(home, /import \{ translateCountry \}/);
+  assert.match(clubView, /import \{ translateCountry \}/);
+  assert.match(playerPage, /import \{ translateCountry \}/);
+  assert.match(translations, /Brazil: "Brasil"/);
+  assert.match(translations, /Germany: "Alemania"/);
+  assert.match(translations, /Mexico: "México"/);
+  assert.match(translations, /Wales: "Gales"/);
+});

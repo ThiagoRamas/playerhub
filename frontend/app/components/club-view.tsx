@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { translateCountry } from "../lib/translations";
 
 export type ClubSummary = {
   id: number;
@@ -47,13 +48,6 @@ const positionLabels: Record<string, string> = {
   "Second Striker": "Segundo delantero",
 };
 
-const countryLabels: Record<string, string> = {
-  Italy: "Italia",
-  Spain: "España",
-  Ukraine: "Ucrania",
-  "United States": "Estados Unidos",
-};
-
 const statusLabels: Record<SquadStatus, string> = {
   SQUAD: "En el plantel",
   ON_LOAN: "A préstamo",
@@ -80,10 +74,6 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
   timeZone: "UTC",
 });
-
-export function translateCountry(country: string) {
-  return countryLabels[country] ?? country;
-}
 
 function translatePosition(position: string | null) {
   if (!position) return "Posición sin informar";

@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import ClubView, { translateCountry, type ClubDetail, type ClubSummary, type SquadMember } from "./components/club-view";
+import ClubView, { type ClubDetail, type ClubSummary, type SquadMember } from "./components/club-view";
+import { translateCountry } from "./lib/translations";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
