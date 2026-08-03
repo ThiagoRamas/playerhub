@@ -83,6 +83,8 @@ docker compose --profile tools run --rm etl load-country --country Argentina --b
 
 Si la ejecución se interrumpe, el mismo comando puede repetirse: las cargas terminadas quedan confirmadas y los registros existentes se actualizan sin duplicarse.
 
+Cuando el catálogo de clubes contiene un nombre truncado, el importador recupera el nombre más frecuente presente en los perfiles vinculados. Esta regla corrige casos conocidos como `CA Newell\` sin modificar los CSV originales.
+
 Pruebas del importador:
 
 ```powershell

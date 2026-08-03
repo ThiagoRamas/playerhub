@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date
 import hashlib
 import json
@@ -66,6 +67,21 @@ def clean_entity_name(value: str | None, external_id: int | str | None = None) -
     if external_id is not None:
         cleaned = re.sub(rf"\s*\({re.escape(str(external_id))}\)\s*$", "", cleaned)
     return cleaned.strip()
+
+
+def resolve_club_name(
+    external_id: int,
+    detail_name: str | None,
+    profile_names: list[str | None],
+) -> str:
+    candidates = [
+        clean_entity_name(name, external_id)
+        for name in profile_names
+        if optional_text(name) and name not in NON_CLUB_NAMES
+    ]
+    if candidates:
+        return Counter(candidates).most_common(1)[0][0]
+    return clean_entity_name(detail_name, external_id)
 
 
 def optional_int(value: str | None, *, zero_is_null: bool = False) -> int | None:

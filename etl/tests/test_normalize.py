@@ -6,6 +6,7 @@ from playerhub_etl.normalize import (
     optional_int,
     position_code,
     preferred_foot,
+    resolve_club_name,
     season_values,
     split_citizenships,
     transfer_type,
@@ -23,6 +24,19 @@ class NormalizeTest(unittest.TestCase):
     def test_splits_multiple_citizenships(self) -> None:
         self.assertEqual(split_citizenships("Argentina  Italy"), ["Argentina", "Italy"])
         self.assertEqual(split_citizenships("Brazil"), ["Brazil"])
+
+    def test_resolves_truncated_club_name_from_profiles(self) -> None:
+        self.assertEqual(
+            resolve_club_name(
+                1286,
+                "CA Newell\\",
+                ["CA Newell's Old Boys", "CA Newell's Old Boys"],
+            ),
+            "CA Newell's Old Boys",
+        )
+
+    def test_keeps_detail_name_without_profile_candidate(self) -> None:
+        self.assertEqual(resolve_club_name(209, "CA River Plate (209)", []), "CA River Plate")
 
     def test_normalizes_zero_height_and_foot(self) -> None:
         self.assertIsNone(optional_int("0.0", zero_is_null=True))

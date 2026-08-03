@@ -12,6 +12,7 @@ from .normalize import (
     optional_text,
     position_code,
     preferred_foot,
+    resolve_club_name,
     split_citizenships,
 )
 from .repository import Repository
@@ -67,9 +68,23 @@ def load_club_snapshot(
                 return country_cache[cleaned]
 
             target_country_id = country_id(detail["country_name"])
+            target_external_id = str(settings.target_club_id)
+            target_profile_names = [
+                profile[name_field]
+                for profile in profiles
+                for external_field, name_field in (
+                    ("current_club_id", "current_club_name"),
+                    ("on_loan_from_club_id", "on_loan_from_club_name"),
+                )
+                if profile[external_field] == target_external_id
+            ]
             target_internal_id = repository.upsert_club(
                 settings.target_club_id,
-                clean_entity_name(detail["club_name"], settings.target_club_id),
+                resolve_club_name(
+                    settings.target_club_id,
+                    detail["club_name"],
+                    target_profile_names,
+                ),
                 run_id,
                 slug=optional_text(detail["club_slug"]),
                 country_id=target_country_id,

@@ -4,6 +4,8 @@ import hashlib
 from pathlib import Path
 from typing import Iterator
 
+from .normalize import resolve_club_name
+
 
 FILE_PATHS = {
     "profiles": "player_profiles/player_profiles.csv",
@@ -85,12 +87,18 @@ class DatasetSource:
         limit: int | None = 20,
     ) -> list[dict[str, str | int]]:
         players_by_club: dict[int, set[int]] = defaultdict(set)
+        names_by_club: dict[int, list[str]] = defaultdict(list)
         for row in self.rows("profiles"):
             player_id = int(row["player_id"])
-            for field in ("current_club_id", "on_loan_from_club_id"):
-                raw_club_id = row[field].strip()
+            for id_field, name_field in (
+                ("current_club_id", "current_club_name"),
+                ("on_loan_from_club_id", "on_loan_from_club_name"),
+            ):
+                raw_club_id = row[id_field].strip()
                 if raw_club_id.isdigit():
-                    players_by_club[int(raw_club_id)].add(player_id)
+                    club_id = int(raw_club_id)
+                    players_by_club[club_id].add(player_id)
+                    names_by_club[club_id].append(row.get(name_field, ""))
 
         search_value = search.casefold().strip() if search else None
         country_value = country.casefold().strip() if country else None
@@ -107,7 +115,11 @@ class DatasetSource:
             clubs.append(
                 {
                     "club_id": club_id,
-                    "club_name": row["club_name"],
+                    "club_name": resolve_club_name(
+                        club_id,
+                        row["club_name"],
+                        names_by_club.get(club_id, []),
+                    ),
                     "country_name": row["country_name"],
                     "players": player_count,
                 }
