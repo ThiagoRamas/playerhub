@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import pool
-from .routers import clubs, health, players
+from .routers import clubs, health, players, stats
 
 
 @asynccontextmanager
@@ -39,6 +39,10 @@ app = FastAPI(
                 "transferencias y lesiones."
             ),
         },
+        {
+            "name": "Estadísticas",
+            "description": "Cobertura y volumen de los datos disponibles en PlayerHub.",
+        },
     ],
     lifespan=lifespan,
 )
@@ -54,3 +58,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(clubs.router, prefix="/api/v1")
 app.include_router(players.router, prefix="/api/v1")
+app.include_router(stats.router, prefix="/api/v1")

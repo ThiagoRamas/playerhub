@@ -79,10 +79,25 @@ def test_searches_players_by_name(client: TestClient) -> None:
     assert "citizenships" in result
 
 
+def test_reports_current_data_coverage(client: TestClient) -> None:
+    response = client.get("/api/v1/stats")
+
+    assert response.status_code == 200
+    stats = response.json()
+    assert stats["clubs"] >= 81
+    assert stats["players"] >= 1091
+    assert stats["performances"] > stats["players"]
+    assert stats["market_values"] > 0
+    assert stats["transfers"] > 0
+    assert stats["injuries"] > 0
+    assert stats["data_as_of"] is not None
+
+
 def test_openapi_uses_spanish_product_language(client: TestClient) -> None:
     schema = client.get("/openapi.json").json()
 
     assert schema["info"]["title"] == "API de PlayerHub"
     assert schema["paths"]["/api/v1/clubs"]["get"]["summary"] == "Listar o buscar clubes"
     assert schema["paths"]["/api/v1/players"]["get"]["summary"] == "Buscar jugadores"
+    assert schema["paths"]["/api/v1/stats"]["get"]["summary"] == "Ver cobertura de datos"
     assert schema["paths"]["/api/v1/players/{player_id}/injuries"]["get"]["summary"] == "Ver lesiones"

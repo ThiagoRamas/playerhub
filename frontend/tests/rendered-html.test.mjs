@@ -133,3 +133,12 @@ test("renderiza el buscador general de jugadores", async () => {
   assert.match(players, /href=\{`\/jugadores\/\$\{player\.id\}`\}/);
   assert.match(playerDetail, /href="\/jugadores"/);
 });
+
+test("muestra cobertura real de la base en la portada", async () => {
+  const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(home, /api\/v1\/stats/);
+  assert.match(home, /COBERTURA ACTUAL/);
+  assert.match(home, /platformStats\.players/);
+  assert.match(home, /platformStats\.clubs/);
+  assert.doesNotMatch(home, /<strong>23<\/strong>/);
+});

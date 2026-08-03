@@ -9,6 +9,16 @@ class HealthResponse(BaseModel):
     database: Literal["ok"]
 
 
+class PlatformStats(BaseModel):
+    clubs: int
+    players: int
+    performances: int
+    market_values: int
+    transfers: int
+    injuries: int
+    data_as_of: date | None
+
+
 class ClubSummary(BaseModel):
     id: int
     name: str

@@ -6,6 +6,18 @@ import { translateCountry } from "./lib/translations";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+type PlatformStats = {
+  clubs: number;
+  players: number;
+  performances: number;
+  market_values: number;
+  transfers: number;
+  injuries: number;
+  data_as_of: string | null;
+};
+
+const numberFormatter = new Intl.NumberFormat("es-AR");
+
 export default function Home() {
   const [query, setQuery] = useState("Independiente");
   const [results, setResults] = useState<ClubSummary[]>([]);
@@ -14,6 +26,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
 
   const loadClub = useCallback(async (selected: ClubSummary) => {
     setLoading(true);
@@ -65,7 +78,15 @@ export default function Home() {
     }
   }, [loadClub]);
 
-  useEffect(() => { void searchClubs("Independiente", true); }, [searchClubs]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void searchClubs("Independiente", true);
+    void fetch(`${API_URL}/api/v1/stats`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((stats) => { if (stats) setPlatformStats(stats as PlatformStats); })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [searchClubs]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,9 +126,10 @@ export default function Home() {
             </div>
           )}
         </div>
-        <div className="hero-card" aria-hidden="true">
-          <span className="hero-card-kicker">RADAR DE TALENTO</span><strong>23</strong><span>perfiles conectados</span>
+        <div className="hero-card" aria-label="Cobertura actual de PlayerHub">
+          <span className="hero-card-kicker">COBERTURA ACTUAL</span><strong>{platformStats ? numberFormatter.format(platformStats.players) : "—"}</strong><span>perfiles conectados</span>
           <div className="radar-lines"><i /><i /><i /></div>
+          <small className="hero-card-foot">{platformStats ? `${numberFormatter.format(platformStats.clubs)} clubes cubiertos` : "Calculando cobertura…"}</small>
         </div>
       </section>
 

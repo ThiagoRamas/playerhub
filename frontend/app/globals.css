@@ -42,6 +42,7 @@ img { display:block; max-width:100%; }
 .hero-card-kicker { font-size:11px; letter-spacing:.18em; opacity:.68; }
 .hero-card strong { margin-top:auto; font-size:100px; line-height:.85; letter-spacing:-.08em; }
 .hero-card>span:not(.hero-card-kicker) { margin-top:13px; font-size:18px; opacity:.8; }
+.hero-card-foot { margin-top:15px; color:rgba(255,255,255,.56); font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
 .radar-lines { margin-top:28px; display:grid; gap:7px; }
 .radar-lines i { height:3px; display:block; background:var(--red); border-radius:4px; }
 .radar-lines i:nth-child(2) { width:72%; opacity:.65; }
