@@ -49,9 +49,22 @@ def test_missing_entities_return_404(client: TestClient) -> None:
     assert missing_player.json() == {"detail": "Jugador no encontrado"}
 
 
+def test_lists_argentine_clubs_without_requiring_a_search(client: TestClient) -> None:
+    response = client.get(
+        "/api/v1/clubs",
+        params={"country": "Argentina", "limit": 100},
+    )
+
+    assert response.status_code == 200
+    clubs = response.json()
+    assert len(clubs) > 1
+    assert all(club["country"] == "Argentina" for club in clubs)
+    assert clubs == sorted(clubs, key=lambda club: club["name"])
+
+
 def test_openapi_uses_spanish_product_language(client: TestClient) -> None:
     schema = client.get("/openapi.json").json()
 
     assert schema["info"]["title"] == "API de PlayerHub"
-    assert schema["paths"]["/api/v1/clubs"]["get"]["summary"] == "Buscar clubes"
+    assert schema["paths"]["/api/v1/clubs"]["get"]["summary"] == "Listar o buscar clubes"
     assert schema["paths"]["/api/v1/players/{player_id}/injuries"]["get"]["summary"] == "Ver lesiones"

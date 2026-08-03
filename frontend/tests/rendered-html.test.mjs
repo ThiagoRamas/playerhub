@@ -92,3 +92,24 @@ test("centraliza y amplía los nombres de países en español", async () => {
   assert.match(translations, /Mexico: "México"/);
   assert.match(translations, /Wales: "Gales"/);
 });
+
+test("renderiza el catálogo de clubes y conecta la navegación", async () => {
+  const response = await render("/clubes");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Todos los clubes/);
+  assert.match(html, /Cargando clubes/);
+
+  const [home, catalog, clubPage, playerPage] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(home, /href="\/clubes"/);
+  assert.match(catalog, /country=Argentina&limit=100/);
+  assert.match(catalog, /href=\{`\/clubes\/\$\{club\.id\}`\}/);
+  assert.match(catalog, /filteredClubs\.length === 1 \? "resultado" : "resultados"/);
+  assert.match(clubPage, /Volver a todos los clubes/);
+  assert.match(playerPage, /href="\/clubes"/);
+});

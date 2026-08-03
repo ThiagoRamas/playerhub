@@ -14,30 +14,40 @@ DatabaseConnection = Annotated[Connection, Depends(get_connection)]
 @router.get(
     "",
     response_model=list[ClubSummary],
-    summary="Buscar clubes",
-    description="Busca clubes por nombre y devuelve primero las coincidencias más cercanas.",
+    summary="Listar o buscar clubes",
+    description=(
+        "Lista clubes y permite filtrarlos por nombre y país. "
+        "Cuando se busca por nombre, devuelve primero las coincidencias más cercanas."
+    ),
 )
 def search_clubs(
     connection: DatabaseConnection,
     search: Annotated[
-        str,
+        str | None,
         Query(min_length=2, max_length=100, description="Nombre o parte del nombre del club."),
-    ],
+    ] = None,
+    country: Annotated[
+        str | None,
+        Query(min_length=2, max_length=100, description="País del club."),
+    ] = None,
     limit: Annotated[
         int,
         Query(ge=1, le=100, description="Cantidad máxima de resultados."),
     ] = 20,
 ) -> list[dict]:
+    search_pattern = f"%{search}%" if search else None
     return connection.execute(
         """
         SELECT c.id, c.name, c.slug, co.name AS country, c.logo_url, c.is_complete
         FROM clubs c
         LEFT JOIN countries co ON co.id = c.country_id
-        WHERE c.name ILIKE %s
-        ORDER BY similarity(c.name, %s) DESC, c.name
+        WHERE (%s::text IS NULL OR c.name ILIKE %s)
+          AND (%s::text IS NULL OR LOWER(co.name) = LOWER(%s))
+        ORDER BY CASE WHEN %s::text IS NULL THEN 0 ELSE similarity(c.name, %s) END DESC,
+                 c.name
         LIMIT %s
         """,
-        (f"%{search}%", search, limit),
+        (search, search_pattern, country, country, search, search, limit),
     ).fetchall()
 
 

@@ -48,11 +48,11 @@ export default function ClubPage() {
     <main className="club-page">
       <header className="site-header">
         <a className="brand" href="/" aria-label="PlayerHub, inicio"><span className="brand-mark">PH</span><span>PlayerHub</span></a>
-        <nav aria-label="Navegación principal"><a href="/">Buscar clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span></nav>
+        <nav aria-label="Navegación principal"><a href="/clubes">Todos los clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span></nav>
       </header>
 
       <section className="club-section club-page-section" aria-busy={loading}>
-        <a className="club-back-link" href="/">← Volver a la búsqueda</a>
+        <a className="club-back-link" href="/clubes">← Volver a todos los clubes</a>
         {loading ? (
           <div className="loading-panel" role="status"><span className="loader" /><p>Preparando la ficha del club…</p></div>
         ) : error || !club ? (

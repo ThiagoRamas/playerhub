@@ -79,7 +79,7 @@ export default function Home() {
           <span className="brand-mark">PH</span><span>PlayerHub</span>
         </a>
         <nav aria-label="Navegación principal">
-          <a href="#club">Clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span>
+          <a href="/clubes">Clubes</a><a href="#plantel">Jugadores</a><span className="language-badge">ES</span>
         </nav>
       </header>
 
@@ -88,6 +88,7 @@ export default function Home() {
           <span className="eyebrow">Datos de fútbol, en un solo lugar</span>
           <h1>El fútbol, jugador por jugador.</h1>
           <p>Explorá planteles, préstamos, trayectorias y valores de mercado con información organizada por PlayerHub.</p>
+          <a className="catalog-link" href="/clubes">Explorar todos los clubes argentinos →</a>
           <form className="search" onSubmit={handleSubmit} role="search">
             <span className="search-icon" aria-hidden="true">⌕</span>
             <label className="sr-only" htmlFor="club-search">Buscar un club</label>

@@ -168,7 +168,7 @@ export default function PlayerPage() {
     <main className="player-page">
       <header className="site-header">
         <a className="brand" href="/" aria-label="PlayerHub, inicio"><span className="brand-mark">PH</span><span>PlayerHub</span></a>
-        <nav aria-label="Navegación principal"><a href="/">Clubes</a><a href="#historial">Historial</a><span className="language-badge">ES</span></nav>
+        <nav aria-label="Navegación principal"><a href="/clubes">Clubes</a><a href="#historial">Historial</a><span className="language-badge">ES</span></nav>
       </header>
 
       {loading ? (
