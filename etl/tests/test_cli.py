@@ -56,6 +56,34 @@ class CliTest(unittest.TestCase):
         args = build_parser().parse_args(["sync-live-squad", "--club-id", "1234", "--apply"])
         self.assertTrue(args.apply)
 
+    def test_live_country_uses_safe_defaults(self) -> None:
+        args = build_parser().parse_args(
+            ["sync-live-country", "--country", "Argentina"]
+        )
+        self.assertFalse(args.apply)
+        self.assertEqual(args.max_requests, 50)
+        self.assertEqual(args.fresh_days, 7)
+
+    def test_live_country_accepts_gradual_limits(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "sync-live-country",
+                "--country",
+                "Argentina",
+                "--max-clubs",
+                "2",
+                "--max-requests",
+                "40",
+                "--fresh-days",
+                "14",
+                "--apply",
+            ]
+        )
+        self.assertEqual(args.max_clubs, 2)
+        self.assertEqual(args.max_requests, 40)
+        self.assertEqual(args.fresh_days, 14)
+        self.assertTrue(args.apply)
+
 
 if __name__ == "__main__":
     unittest.main()

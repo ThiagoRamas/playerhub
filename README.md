@@ -121,6 +121,10 @@ Cuando API-Football no publica el perfil de un juvenil, el ETL puede completar
 el nombre y la fecha de nacimiento desde el plantel oficial de Reserva de
 Independiente. Estas excepciones están identificadas por jugador y conservan la
 URL oficial en la trazabilidad de la ejecución.
+El mismo mecanismo completa nombres faltantes de juveniles de River usando la
+memoria institucional del club y un boletín oficial de AFA. Cuando esas fuentes
+no publican una fecha de nacimiento, el campo permanece vacío en lugar de
+inferirse.
 Cuando la fuente en vivo identifica sin ambigüedad a un jugador que figura
 actualmente en otro club, el ETL cierra ese vínculo anterior antes de crear el
 nuevo. El registro anterior no se elimina: queda disponible como historial con
@@ -140,6 +144,31 @@ docker compose --profile tools run --rm etl sync-live-squad --club-id 1234 --pro
 ```
 
 API-Football se consulta solo durante el ETL. La API web y el frontend continúan leyendo exclusivamente PostgreSQL.
+
+Para actualizar gradualmente los clubes argentinos sin recorrerlos uno por uno,
+el coordinador selecciona primero los planteles que no tienen fuente en vivo o
+que llevan más de siete días sin actualizarse. Por seguridad procesa un solo
+club de forma predeterminada, comparte el intervalo entre consultas y nunca
+supera el presupuesto local configurado. La primera ejecución es una vista
+previa:
+
+```powershell
+docker compose --profile tools run --rm etl sync-live-country --country Argentina --max-clubs 1 --max-requests 40
+```
+
+El resumen informa cuántas consultas se usaron, qué clubes se pudieron
+comparar y por qué se detuvo el lote. Después de revisar que cada club indique
+`safe_to_apply: true`, la misma selección puede aplicarse explícitamente:
+
+```powershell
+docker compose --profile tools run --rm etl sync-live-country --country Argentina --max-clubs 1 --max-requests 40 --apply
+```
+
+Los clubes actualizados quedan fuera de los lotes siguientes durante siete
+días. `--fresh-days` permite cambiar ese período y `--search` limitar una
+prueba a un nombre concreto. Cada club aplicado se confirma por separado, de
+modo que una interrupción no elimina lo ya completado y el comando puede
+repetirse.
 
 Pruebas del importador:
 

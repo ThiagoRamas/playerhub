@@ -1,7 +1,10 @@
 import json
 import unittest
 
-from playerhub_etl.api_football import ApiFootballClient
+from playerhub_etl.api_football import (
+    ApiFootballClient,
+    ApiFootballRequestBudgetExceeded,
+)
 
 
 class FakeResponse:
@@ -19,6 +22,21 @@ class FakeResponse:
 
 
 class ApiFootballClientTest(unittest.TestCase):
+    def test_stops_before_exceeding_the_local_request_budget(self) -> None:
+        client = ApiFootballClient(
+            "secret",
+            max_request_count=1,
+            opener=lambda request, timeout: FakeResponse(
+                {"errors": [], "response": []}
+            ),
+        )
+
+        client.search_teams("River")
+        with self.assertRaises(ApiFootballRequestBudgetExceeded):
+            client.search_teams("Boca")
+
+        self.assertEqual(client.requests_made, 1)
+
     def test_parses_team_search_without_exposing_key_in_url(self) -> None:
         captured = {}
 

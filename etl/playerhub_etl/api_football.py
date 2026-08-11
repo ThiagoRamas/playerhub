@@ -14,6 +14,10 @@ class ApiFootballError(RuntimeError):
     pass
 
 
+class ApiFootballRequestBudgetExceeded(ApiFootballError):
+    pass
+
+
 @dataclass(frozen=True)
 class LiveTeam:
     external_id: int
@@ -55,6 +59,7 @@ class ApiFootballClient:
         base_url: str = "https://v3.football.api-sports.io",
         timeout_seconds: float = 20.0,
         min_request_interval_seconds: float = 0.0,
+        max_request_count: int | None = None,
         opener: OpenUrl = urlopen,
         sleeper: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
@@ -65,6 +70,10 @@ class ApiFootballClient:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.min_request_interval_seconds = max(0.0, min_request_interval_seconds)
+        if max_request_count is not None and max_request_count <= 0:
+            raise ValueError("max_request_count must be greater than zero")
+        self.max_request_count = max_request_count
+        self.requests_made = 0
         self.opener = opener
         self.sleeper = sleeper
         self.clock = clock
@@ -92,7 +101,15 @@ class ApiFootballClient:
         )
         last_error: Exception | None = None
         for attempt in range(3):
+            if (
+                self.max_request_count is not None
+                and self.requests_made >= self.max_request_count
+            ):
+                raise ApiFootballRequestBudgetExceeded(
+                    "API-Football request budget exhausted before starting another request"
+                )
             self._wait_for_rate_slot()
+            self.requests_made += 1
             try:
                 with self.opener(request, timeout=self.timeout_seconds) as response:
                     payload = json.loads(response.read().decode("utf-8"))

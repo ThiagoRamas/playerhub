@@ -14,6 +14,7 @@ COMMANDS = (
     "load-country",
     "find-live-clubs",
     "sync-live-squad",
+    "sync-live-country",
 )
 
 
@@ -21,6 +22,13 @@ def positive_int(value: str) -> int:
     parsed = int(value)
     if parsed <= 0:
         raise argparse.ArgumentTypeError("el identificador debe ser mayor que cero")
+    return parsed
+
+
+def non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("el valor no puede ser negativo")
     return parsed
 
 
@@ -75,6 +83,18 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Aplica la sincronización. Sin esta opción solo muestra diferencias.",
     )
+    parser.add_argument(
+        "--max-requests",
+        type=positive_int,
+        default=50,
+        help="Límite local de consultas a API-Football (por defecto: 50).",
+    )
+    parser.add_argument(
+        "--fresh-days",
+        type=non_negative_int,
+        default=7,
+        help="Días durante los que un plantel se considera actualizado (por defecto: 7).",
+    )
     return parser
 
 
@@ -127,6 +147,25 @@ def main() -> None:
                 default=str,
             )
         )
+        return
+
+    if args.command == "sync-live-country":
+        if not args.country:
+            parser = build_parser()
+            parser.error("sync-live-country requiere --country")
+        from .live_batch import sync_live_country
+
+        result = sync_live_country(
+            settings,
+            args.country,
+            search=args.search,
+            max_clubs=args.max_clubs or 1,
+            max_requests=args.max_requests,
+            fresh_days=args.fresh_days,
+            apply=args.apply,
+            progress=lambda message: print(message, flush=True),
+        )
+        print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
         return
 
     if args.command == "list-source-clubs":

@@ -98,6 +98,47 @@ class Repository:
             (external_id,),
         ).fetchone()
 
+    def live_sync_candidates(
+        self,
+        country: str,
+        stale_before: date,
+        limit: int,
+        search: str | None = None,
+    ) -> list[dict[str, Any]]:
+        return self.connection.execute(
+            """
+            SELECT c.id AS playerhub_club_id,
+                   c.source_external_id AS legacy_club_id,
+                   c.name,
+                   co.name AS country,
+                   c.data_as_of,
+                   api.external_id AS provider_team_id
+            FROM clubs c
+            JOIN countries co ON co.id = c.country_id
+            LEFT JOIN (
+                SELECT identifier.club_id, identifier.external_id
+                FROM club_source_identifiers identifier
+                JOIN data_sources source ON source.id = identifier.source_id
+                WHERE source.code = 'API_FOOTBALL'
+            ) api ON api.club_id = c.id
+            WHERE c.is_complete
+              AND c.source_external_id IS NOT NULL
+              AND LOWER(co.name) = LOWER(%s)
+              AND (
+                  CAST(%s AS TEXT) IS NULL
+                  OR c.name ILIKE '%%' || CAST(%s AS TEXT) || '%%'
+              )
+              AND (
+                  api.external_id IS NULL
+                  OR c.data_as_of IS NULL
+                  OR c.data_as_of < %s
+              )
+            ORDER BY (api.external_id IS NOT NULL), c.data_as_of NULLS FIRST, c.name
+            LIMIT %s
+            """,
+            (country, search, search, stale_before, limit),
+        ).fetchall()
+
     def source_external_id(self, entity: str, entity_id: int, source_code: str) -> str | None:
         if entity not in {"club", "player"}:
             raise ValueError(f"Unsupported source entity: {entity}")

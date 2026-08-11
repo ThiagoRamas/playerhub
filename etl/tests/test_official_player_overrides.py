@@ -2,7 +2,9 @@ import unittest
 
 from playerhub_etl.api_football import LivePlayer, LiveSquad, LiveTeam
 from playerhub_etl.official_player_overrides import (
+    OFFICIAL_AFA_ASUZU_URL,
     OFFICIAL_RESERVE_SQUAD_URL,
+    OFFICIAL_RIVER_2025_SQUAD_URL,
     apply_official_player_overrides,
     official_source_urls,
 )
@@ -38,6 +40,28 @@ class OfficialPlayerOverridesTest(unittest.TestCase):
         self.assertEqual(enriched.players[0].full_name, "Sim\u00f3n Bodnar")
         self.assertEqual(
             enriched.players[0].date_of_birth.isoformat(), "2007-08-22"
+        )
+
+    def test_completes_river_names_without_inventing_birth_dates(self) -> None:
+        squad = LiveSquad(
+            LiveTeam(435, "River Plate", "Argentina", None),
+            (
+                LivePlayer(576649, "F. Jaroszewicz", 20, None, "Goalkeeper", None),
+                LivePlayer(662553, "J. Asuzu", 19, None, "Attacker", None),
+            ),
+        )
+
+        enriched, applied_ids = apply_official_player_overrides(squad)
+
+        self.assertEqual(applied_ids, (576649, 662553))
+        self.assertEqual(
+            enriched.players[0].full_name, "Franco Adri\u00e1n Jaroszewicz"
+        )
+        self.assertIsNone(enriched.players[0].date_of_birth)
+        self.assertEqual(enriched.players[1].full_name, "Jonathan Spiff Asuzu")
+        self.assertEqual(
+            official_source_urls(applied_ids),
+            (OFFICIAL_AFA_ASUZU_URL, OFFICIAL_RIVER_2025_SQUAD_URL),
         )
 
 

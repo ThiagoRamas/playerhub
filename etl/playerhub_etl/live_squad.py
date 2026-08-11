@@ -5,7 +5,13 @@ import unicodedata
 from typing import Any
 
 from . import __version__
-from .api_football import ApiFootballClient, ApiFootballError, LivePlayer, LiveTeam
+from .api_football import (
+    ApiFootballClient,
+    ApiFootballError,
+    ApiFootballRequestBudgetExceeded,
+    LivePlayer,
+    LiveTeam,
+)
 from .config import Settings
 from .normalize import fingerprint
 from .official_player_overrides import (
@@ -340,6 +346,8 @@ def sync_live_squad(
         enrichment_warning: str | None = None
         try:
             squad = client.enrich_squad(squad, profile_ids)
+        except ApiFootballRequestBudgetExceeded:
+            raise
         except ApiFootballError as error:
             # The current squad is still useful when the provider limits its
             # optional profile endpoint. Preview remains available and apply
