@@ -110,8 +110,23 @@ test("renderiza el catálogo de clubes y conecta la navegación", async () => {
   assert.match(catalog, /country=Argentina&limit=100/);
   assert.match(catalog, /href=\{`\/clubes\/\$\{club\.id\}`\}/);
   assert.match(catalog, /filteredClubs\.length === 1 \? "resultado" : "resultados"/);
+  assert.match(catalog, /Plantel actualizado/);
+  assert.match(catalog, /Corte histórico/);
+  assert.match(catalog, /formatClubDataDate/);
   assert.match(clubPage, /Volver a todos los clubes/);
   assert.match(playerPage, /href="\/clubes"/);
+});
+
+test("distingue planteles actuales de cortes históricos", async () => {
+  const [home, clubView] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/club-view.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(home, /result\.has_live_data/);
+  assert.match(clubView, /club\.has_live_data/);
+  assert.match(clubView, /Fuente en vivo importada/);
+  assert.match(clubView, /Instantánea histórica/);
 });
 
 test("renderiza el buscador general de jugadores", async () => {

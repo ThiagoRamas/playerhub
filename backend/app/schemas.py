@@ -26,11 +26,12 @@ class ClubSummary(BaseModel):
     country: str | None
     logo_url: str | None
     is_complete: bool
+    data_as_of: date | None
+    has_live_data: bool
 
 
 class ClubDetail(ClubSummary):
     team_type: str
-    data_as_of: date | None
     linked_players: int
 
 

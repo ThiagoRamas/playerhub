@@ -120,7 +120,7 @@ export default function Home() {
             <div className="search-results" aria-label="Resultados de búsqueda">
               {results.map((result) => (
                 <a key={result.id} href={`/clubes/${result.id}`}>
-                  <span>{result.name}</span><small>{translateCountry(result.country ?? "País sin informar")}</small>
+                  <span>{result.name}</span><small>{translateCountry(result.country ?? "País sin informar")} · {result.has_live_data ? "Actualizado" : "Corte histórico"}</small>
                 </a>
               ))}
             </div>

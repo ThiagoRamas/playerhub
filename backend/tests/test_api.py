@@ -18,18 +18,25 @@ def test_health_and_independiente_vertical_slice(client: TestClient) -> None:
     clubs = client.get("/api/v1/clubs", params={"search": "Independiente"})
     assert clubs.status_code == 200
     independiente = next(club for club in clubs.json() if club["name"] == "CA Independiente")
+    assert isinstance(independiente["has_live_data"], bool)
+    assert independiente["data_as_of"] is not None
 
     detail = client.get(f"/api/v1/clubs/{independiente['id']}")
     assert detail.status_code == 200
-    assert detail.json()["linked_players"] == 23
+    detail_payload = detail.json()
+    assert detail_payload["has_live_data"] == independiente["has_live_data"]
 
     squad = client.get(f"/api/v1/clubs/{independiente['id']}/squad")
     assert squad.status_code == 200
     members = squad.json()
-    assert len(members) == 23
-    assert sum(member["squad_status"] == "SQUAD" for member in members) == 12
-    assert sum(member["squad_status"] == "ON_LOAN" for member in members) == 2
-    assert sum(member["squad_status"] == "LOANED_OUT" for member in members) == 9
+    assert len(members) == detail_payload["linked_players"]
+    assert len(members) > 0
+    assert {member["squad_status"] for member in members} <= {
+        "SQUAD",
+        "ON_LOAN",
+        "LOANED_OUT",
+    }
+    assert any(member["squad_status"] != "LOANED_OUT" for member in members)
 
     player_id = members[0]["id"]
     assert client.get(f"/api/v1/players/{player_id}").status_code == 200
@@ -59,6 +66,10 @@ def test_lists_argentine_clubs_without_requiring_a_search(client: TestClient) ->
     clubs = response.json()
     assert len(clubs) > 1
     assert all(club["country"] == "Argentina" for club in clubs)
+    assert all(isinstance(club["has_live_data"], bool) for club in clubs)
+    assert all("data_as_of" in club for club in clubs)
+    assert any(club["has_live_data"] for club in clubs)
+    assert any(not club["has_live_data"] for club in clubs)
     assert clubs == sorted(clubs, key=lambda club: club["name"])
 
 

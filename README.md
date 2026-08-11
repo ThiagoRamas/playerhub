@@ -177,6 +177,10 @@ Endpoints iniciales:
 
 La interfaz de PlayerHub está disponible en español e incluye búsqueda de clubes, resumen del plantel, valor de mercado y filtros para jugadores propios, incorporados a préstamo y cedidos. Cada tarjeta abre una ficha individual con rendimiento, evolución de valor, transferencias y lesiones.
 
+El catálogo y las fichas distinguen los planteles sincronizados con una fuente
+en vivo de las instantáneas históricas. En ambos casos se muestra la fecha de
+corte para que el usuario conozca la vigencia de la información.
+
 ```powershell
 docker compose up -d --build frontend
 ```

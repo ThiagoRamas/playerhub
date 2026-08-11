@@ -38,7 +38,15 @@ def search_clubs(
     search_pattern = f"%{search}%" if search else None
     return connection.execute(
         """
-        SELECT c.id, c.name, c.slug, co.name AS country, c.logo_url, c.is_complete
+        SELECT c.id, c.name, c.slug, co.name AS country, c.logo_url, c.is_complete,
+               c.data_as_of,
+               EXISTS (
+                   SELECT 1
+                   FROM club_source_identifiers identifier
+                   JOIN data_sources source ON source.id = identifier.source_id
+                   WHERE identifier.club_id = c.id
+                     AND source.code = 'API_FOOTBALL'
+               ) AS has_live_data
         FROM clubs c
         LEFT JOIN countries co ON co.id = c.country_id
         WHERE (%s::text IS NULL OR c.name ILIKE %s)
@@ -62,6 +70,13 @@ def get_club(club_id: int, connection: DatabaseConnection) -> dict:
         """
         SELECT c.id, c.name, c.slug, co.name AS country, c.logo_url, c.is_complete,
                c.team_type, c.data_as_of,
+               EXISTS (
+                   SELECT 1
+                   FROM club_source_identifiers identifier
+                   JOIN data_sources source ON source.id = identifier.source_id
+                   WHERE identifier.club_id = c.id
+                     AND source.code = 'API_FOOTBALL'
+               ) AS has_live_data,
                COUNT(DISTINCT m.player_id) FILTER (WHERE m.is_current) AS linked_players
         FROM clubs c
         LEFT JOIN countries co ON co.id = c.country_id

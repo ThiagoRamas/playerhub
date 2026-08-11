@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ClubSummary } from "../components/club-view";
+import { formatClubDataDate, type ClubSummary } from "../components/club-view";
 import { translateCountry } from "../lib/translations";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -73,7 +73,12 @@ export default function ClubsPage() {
             {filteredClubs.map((club) => (
               <a className="catalog-card" href={`/clubes/${club.id}`} key={club.id}>
                 <div className="catalog-logo">{club.logo_url ? <img src={club.logo_url} alt={`Escudo de ${club.name}`} loading="lazy" /> : <span>PH</span>}</div>
-                <div><h3>{club.name}</h3><p>{translateCountry(club.country ?? "País sin informar")}</p></div>
+                <div className="catalog-card-copy">
+                  <h3>{club.name}</h3><p>{translateCountry(club.country ?? "País sin informar")}</p>
+                  <span className={`freshness-badge ${club.has_live_data ? "live" : "historical"}`}>
+                    {club.has_live_data ? "Plantel actualizado" : "Corte histórico"} · {formatClubDataDate(club.data_as_of)}
+                  </span>
+                </div>
                 <span className="catalog-arrow" aria-hidden="true">→</span>
               </a>
             ))}

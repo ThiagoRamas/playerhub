@@ -10,11 +10,12 @@ export type ClubSummary = {
   country: string | null;
   logo_url: string | null;
   is_complete: boolean;
+  data_as_of: string | null;
+  has_live_data: boolean;
 };
 
 export type ClubDetail = ClubSummary & {
   team_type: string;
-  data_as_of: string | null;
   linked_players: number;
 };
 
@@ -75,6 +76,10 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   timeZone: "UTC",
 });
 
+export function formatClubDataDate(value: string | null) {
+  return value ? dateFormatter.format(new Date(`${value}T00:00:00`)) : "Sin fecha";
+}
+
 function translatePosition(position: string | null) {
   if (!position) return "Posición sin informar";
   return positionLabels[position] ?? position;
@@ -122,7 +127,11 @@ export default function ClubView({ club, squad }: { club: ClubDetail; squad: Squ
           <div className="club-logo">{club.logo_url ? <img src={club.logo_url} alt={`Escudo de ${club.name}`} /> : <span>PH</span>}</div>
           <div><span className="section-label">Ficha del club</span><h2><a href={`/clubes/${club.id}`}>{club.name}</a></h2><p>{translateCountry(club.country ?? "País sin informar")} · Primera división</p></div>
         </div>
-        <div className="data-date"><span>Datos actualizados</span><strong>{club.data_as_of ? dateFormatter.format(new Date(`${club.data_as_of}T00:00:00`)) : "Sin fecha"}</strong></div>
+        <div className={`data-date ${club.has_live_data ? "live" : "historical"}`}>
+          <span>{club.has_live_data ? "Plantel actualizado" : "Corte histórico"}</span>
+          <strong>{formatClubDataDate(club.data_as_of)}</strong>
+          <small>{club.has_live_data ? "Fuente en vivo importada" : "Instantánea histórica"}</small>
+        </div>
       </div>
 
       <div className="stats-grid">
