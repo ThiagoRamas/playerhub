@@ -13,7 +13,8 @@ BEGIN
             ('etl_runs'), ('injuries'), ('market_values'), ('performances'),
             ('player_agent_representations'), ('player_citizenships'),
             ('player_club_memberships'), ('player_positions'), ('players'),
-            ('position_groups'), ('positions'), ('seasons'), ('transfers')
+            ('position_groups'), ('positions'), ('seasons'), ('transfers'),
+            ('data_sources'), ('club_source_identifiers'), ('player_source_identifiers')
     ) AS required(name)
     LEFT JOIN information_schema.tables actual
         ON actual.table_schema = 'public' AND actual.table_name = required.name
@@ -30,8 +31,8 @@ BEGIN
         RAISE EXCEPTION 'Expected 4 position groups';
     END IF;
 
-    IF (SELECT COUNT(*) FROM positions) <> 13 THEN
-        RAISE EXCEPTION 'Expected 13 seeded positions';
+    IF (SELECT COUNT(*) FROM positions) < 16 THEN
+        RAISE EXCEPTION 'Expected at least 16 seeded positions';
     END IF;
 
     IF EXISTS (
@@ -45,4 +46,3 @@ BEGIN
 END $$;
 
 SELECT 'PlayerHub schema verification passed' AS result;
-

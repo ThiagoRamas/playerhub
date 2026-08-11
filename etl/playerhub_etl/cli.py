@@ -12,6 +12,8 @@ COMMANDS = (
     "load-player-history",
     "load-club-data",
     "load-country",
+    "find-live-clubs",
+    "sync-live-squad",
 )
 
 
@@ -63,6 +65,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=positive_int,
         help="Límite opcional de clubes para una carga de prueba.",
     )
+    parser.add_argument(
+        "--provider-team-id",
+        type=positive_int,
+        help="ID del club en API-Football cuando no puede identificarse automáticamente.",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Aplica la sincronización. Sin esta opción solo muestra diferencias.",
+    )
     return parser
 
 
@@ -77,6 +89,46 @@ def summary_payload(club_id: int, summary: object) -> dict[str, object]:
 def main() -> None:
     args = build_parser().parse_args()
     settings = Settings.from_environment()
+    if args.command == "find-live-clubs":
+        if not args.search:
+            parser = build_parser()
+            parser.error("find-live-clubs requiere --search")
+        from .live_squad import find_live_clubs
+
+        print(
+            json.dumps(
+                find_live_clubs(settings, args.search, args.country),
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return
+
+    if args.command == "sync-live-squad":
+        from .live_squad import sync_live_squad
+
+        club_ids = selected_club_ids(args, settings)
+        if args.provider_team_id and len(club_ids) != 1:
+            parser = build_parser()
+            parser.error("--provider-team-id solo puede usarse con un club")
+        results = [
+            sync_live_squad(
+                settings.for_club(club_id),
+                provider_team_id=args.provider_team_id,
+                apply=args.apply,
+            )
+            for club_id in club_ids
+        ]
+        print(
+            json.dumps(
+                results[0] if len(results) == 1 else {"clubs": results},
+                indent=2,
+                ensure_ascii=False,
+                default=str,
+            )
+        )
+        return
+
     if args.command == "list-source-clubs":
         source = DatasetSource(settings.dataset_root)
         clubs = source.available_clubs(args.search, args.country, args.limit)

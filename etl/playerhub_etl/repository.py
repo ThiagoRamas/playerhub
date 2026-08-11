@@ -86,6 +86,304 @@ class Repository:
         ).fetchall()
         return {int(row["source_external_id"]) for row in rows}
 
+    def club_by_legacy_external_id(self, external_id: int) -> dict[str, Any] | None:
+        return self.connection.execute(
+            """
+            SELECT c.id, c.source_external_id, c.name, co.name AS country,
+                   c.logo_url, c.data_as_of
+            FROM clubs c
+            LEFT JOIN countries co ON co.id = c.country_id
+            WHERE c.source_external_id = %s
+            """,
+            (external_id,),
+        ).fetchone()
+
+    def source_external_id(self, entity: str, entity_id: int, source_code: str) -> str | None:
+        if entity not in {"club", "player"}:
+            raise ValueError(f"Unsupported source entity: {entity}")
+        table = f"{entity}_source_identifiers"
+        column = f"{entity}_id"
+        row = self.connection.execute(
+            f"""
+            SELECT identifier.external_id
+            FROM {table} identifier
+            JOIN data_sources source ON source.id = identifier.source_id
+            WHERE identifier.{column} = %s AND source.code = %s
+            """,
+            (entity_id, source_code),
+        ).fetchone()
+        return str(row["external_id"]) if row else None
+
+    def bind_source_identifier(
+        self,
+        entity: str,
+        entity_id: int,
+        source_code: str,
+        external_id: str,
+        run_id: int,
+    ) -> None:
+        if entity not in {"club", "player"}:
+            raise ValueError(f"Unsupported source entity: {entity}")
+        table = f"{entity}_source_identifiers"
+        column = f"{entity}_id"
+        self.connection.execute(
+            f"""
+            INSERT INTO {table}
+                ({column}, source_id, external_id, source_etl_run_id)
+            SELECT %s, id, %s, %s FROM data_sources WHERE code = %s
+            ON CONFLICT ({column}, source_id) DO UPDATE SET
+                external_id = EXCLUDED.external_id,
+                last_seen_at = CURRENT_TIMESTAMP,
+                source_etl_run_id = EXCLUDED.source_etl_run_id
+            """,
+            (entity_id, external_id, run_id, source_code),
+        )
+
+    def provider_player_mappings(
+        self, source_code: str, external_ids: list[int]
+    ) -> dict[int, int]:
+        if not external_ids:
+            return {}
+        rows = self.connection.execute(
+            """
+            SELECT identifier.external_id, identifier.player_id
+            FROM player_source_identifiers identifier
+            JOIN data_sources source ON source.id = identifier.source_id
+            WHERE source.code = %s AND identifier.external_id = ANY(%s)
+            """,
+            (source_code, [str(value) for value in external_ids]),
+        ).fetchall()
+        return {int(row["external_id"]): int(row["player_id"]) for row in rows}
+
+    def current_club_players(self, club_id: int) -> list[dict[str, Any]]:
+        return self.connection.execute(
+            """
+            SELECT DISTINCT ON (p.id)
+                   p.id, p.display_name, p.full_name, p.date_of_birth,
+                   m.membership_type,
+                   EXISTS (
+                       SELECT 1
+                       FROM player_club_memberships loan
+                       WHERE loan.player_id = p.id AND loan.is_current
+                         AND loan.club_id <> m.club_id
+                         AND loan.membership_type = 'LOAN'
+                   ) AS loaned_out
+            FROM player_club_memberships m
+            JOIN players p ON p.id = m.player_id
+            WHERE m.club_id = %s AND m.is_current
+            ORDER BY p.id,
+                     CASE m.evidence_type
+                         WHEN 'LIVE_SQUAD' THEN 0
+                         WHEN 'PROFILE_SNAPSHOT' THEN 1
+                         ELSE 2
+                     END
+            """,
+            (club_id,),
+        ).fetchall()
+
+    def player_name_candidates(self) -> list[dict[str, Any]]:
+        return self.connection.execute(
+            "SELECT id, display_name, full_name, date_of_birth FROM players ORDER BY id"
+        ).fetchall()
+
+    def insert_live_player(
+        self,
+        display_name: str,
+        full_name: str | None,
+        date_of_birth: date | None,
+        place_of_birth: str | None,
+        country_of_birth_id: int | None,
+        height_cm: int | None,
+        photo_url: str | None,
+        data_as_of: date,
+        run_id: int,
+    ) -> int:
+        row = self.connection.execute(
+            """
+            INSERT INTO players
+                (source_external_id, display_name, full_name, date_of_birth,
+                 place_of_birth, country_of_birth_id, height_cm, career_status,
+                 image_url, is_complete, data_as_of, source_etl_run_id)
+            VALUES
+                (NULL, %s, %s, %s, %s, %s, %s, 'ACTIVE', %s, FALSE, %s, %s)
+            RETURNING id
+            """,
+            (
+                display_name,
+                full_name,
+                date_of_birth,
+                place_of_birth,
+                country_of_birth_id,
+                height_cm,
+                photo_url,
+                data_as_of,
+                run_id,
+            ),
+        ).fetchone()
+        return int(row["id"])
+
+    def touch_live_player(
+        self,
+        player_id: int,
+        full_name: str | None,
+        date_of_birth: date | None,
+        place_of_birth: str | None,
+        country_of_birth_id: int | None,
+        height_cm: int | None,
+        photo_url: str | None,
+        data_as_of: date,
+        run_id: int,
+    ) -> None:
+        self.connection.execute(
+            """
+            UPDATE players
+            SET full_name = COALESCE(full_name, %s),
+                date_of_birth = COALESCE(date_of_birth, %s),
+                place_of_birth = COALESCE(place_of_birth, %s),
+                country_of_birth_id = COALESCE(country_of_birth_id, %s),
+                height_cm = COALESCE(height_cm, %s),
+                image_url = COALESCE(%s, image_url),
+                career_status = 'ACTIVE', data_as_of = %s,
+                source_etl_run_id = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            """,
+            (
+                full_name,
+                date_of_birth,
+                place_of_birth,
+                country_of_birth_id,
+                height_cm,
+                photo_url,
+                data_as_of,
+                run_id,
+                player_id,
+            ),
+        )
+
+    def add_citizenship(self, player_id: int, country_id: int, run_id: int) -> None:
+        self.connection.execute(
+            """
+            INSERT INTO player_citizenships (player_id, country_id, source_etl_run_id)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (player_id, country_id) DO UPDATE SET
+                source_etl_run_id = EXCLUDED.source_etl_run_id
+            """,
+            (player_id, country_id, run_id),
+        )
+
+    def touch_live_club(
+        self, club_id: int, logo_url: str | None, data_as_of: date, run_id: int
+    ) -> None:
+        self.connection.execute(
+            """
+            UPDATE clubs
+            SET logo_url = COALESCE(%s, logo_url), data_as_of = %s,
+                source_etl_run_id = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            """,
+            (logo_url, data_as_of, run_id, club_id),
+        )
+
+    def set_primary_position_if_missing(
+        self, player_id: int, position_code: str | None, run_id: int
+    ) -> None:
+        if not position_code:
+            return
+        self.connection.execute(
+            """
+            INSERT INTO player_positions (player_id, position_id, is_primary, source_etl_run_id)
+            SELECT %s, position.id, TRUE, %s
+            FROM positions position
+            WHERE position.code = %s
+              AND NOT EXISTS (
+                  SELECT 1 FROM player_positions existing
+                  WHERE existing.player_id = %s AND existing.is_primary
+              )
+            ON CONFLICT DO NOTHING
+            """,
+            (player_id, run_id, position_code, player_id),
+        )
+
+    def deactivate_target_memberships(
+        self, club_id: int, player_ids: set[int], data_as_of: date, run_id: int
+    ) -> int:
+        if not player_ids:
+            return 0
+        cursor = self.connection.execute(
+            """
+            UPDATE player_club_memberships
+            SET is_current = FALSE,
+                data_as_of = %s,
+                source_etl_run_id = %s
+            WHERE club_id = %s AND player_id = ANY(%s) AND is_current
+            """,
+            (data_as_of, run_id, club_id, list(player_ids)),
+        )
+        return cursor.rowcount
+
+    def deactivate_other_current_loans(
+        self, target_club_id: int, player_ids: set[int], data_as_of: date, run_id: int
+    ) -> int:
+        if not player_ids:
+            return 0
+        cursor = self.connection.execute(
+            """
+            UPDATE player_club_memberships
+            SET is_current = FALSE,
+                data_as_of = %s,
+                source_etl_run_id = %s
+            WHERE club_id <> %s AND player_id = ANY(%s)
+              AND membership_type = 'LOAN' AND is_current
+            """,
+            (data_as_of, run_id, target_club_id, list(player_ids)),
+        )
+        return cursor.rowcount
+
+    def deactivate_other_current_memberships(
+        self, target_club_id: int, player_ids: set[int], data_as_of: date, run_id: int
+    ) -> int:
+        if not player_ids:
+            return 0
+        cursor = self.connection.execute(
+            """
+            UPDATE player_club_memberships
+            SET is_current = FALSE,
+                data_as_of = %s,
+                source_etl_run_id = %s
+            WHERE club_id <> %s AND player_id = ANY(%s) AND is_current
+            """,
+            (data_as_of, run_id, target_club_id, list(player_ids)),
+        )
+        return cursor.rowcount
+
+    def upsert_live_membership(
+        self,
+        player_id: int,
+        club_id: int,
+        membership_type: str,
+        squad_number: int | None,
+        data_as_of: date,
+        run_id: int,
+    ) -> None:
+        self.connection.execute(
+            """
+            INSERT INTO player_club_memberships
+                (player_id, club_id, membership_type, start_date, end_date,
+                 is_current, evidence_type, confidence, data_as_of,
+                 source_etl_run_id, squad_number)
+            VALUES
+                (%s, %s, %s, NULL, NULL, TRUE, 'LIVE_SQUAD', 'CONFIRMED',
+                 %s, %s, %s)
+            ON CONFLICT
+                (player_id, club_id, membership_type, start_date, end_date, evidence_type)
+            DO UPDATE SET
+                is_current = TRUE, data_as_of = EXCLUDED.data_as_of,
+                source_etl_run_id = EXCLUDED.source_etl_run_id,
+                squad_number = EXCLUDED.squad_number
+            """,
+            (player_id, club_id, membership_type, data_as_of, run_id, squad_number),
+        )
+
     def upsert_country(self, name: str) -> int:
         row = self.connection.execute(
             """

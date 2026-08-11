@@ -85,6 +85,62 @@ Si la ejecución se interrumpe, el mismo comando puede repetirse: las cargas ter
 
 Cuando el catálogo de clubes contiene un nombre truncado, el importador recupera el nombre más frecuente presente en los perfiles vinculados. Esta regla corrige casos conocidos como `CA Newell\` sin modificar los CSV originales.
 
+### Actualizar planteles vigentes
+
+El archivo histórico se conserva y API-Football se utiliza únicamente como fuente de importación para planteles actuales. La clave se guarda solo en `.env`, que está excluido de Git:
+
+```env
+API_FOOTBALL_KEY=tu_clave_privada
+```
+
+En una base ya creada, aplicar la migración incremental una sola vez y reconstruir el importador:
+
+```powershell
+Get-Content database/migrations/002_live_data_sources.sql | docker compose exec -T database psql -U playerhub -d playerhub
+docker compose --profile tools build etl
+```
+
+La primera ejecución de Independiente funciona como vista previa y no modifica datos:
+
+```powershell
+docker compose --profile tools run --rm etl sync-live-squad --club-id 1234
+```
+
+Antes de comparar, el ETL consulta perfiles individuales sin depender de una
+temporada para completar nombre, fecha de nacimiento, nacionalidad, altura y
+foto cuando el proveedor los tiene. Para cuidar el cupo gratuito solo consulta
+jugadores nuevos o con coincidencias dudosas. Si esos perfiles no están
+disponibles, la vista previa sigue funcionando pero la aplicación se bloquea
+automáticamente antes de crear entidades con nombres abreviados.
+
+El intervalo predeterminado de 6,5 segundos entre consultas respeta el límite
+de 10 solicitudes por minuto del plan gratuito. Puede configurarse con
+`API_FOOTBALL_MIN_INTERVAL_SECONDS` si cambia el plan contratado.
+
+Cuando API-Football no publica el perfil de un juvenil, el ETL puede completar
+el nombre y la fecha de nacimiento desde el plantel oficial de Reserva de
+Independiente. Estas excepciones están identificadas por jugador y conservan la
+URL oficial en la trazabilidad de la ejecución.
+Cuando la fuente en vivo identifica sin ambigüedad a un jugador que figura
+actualmente en otro club, el ETL cierra ese vínculo anterior antes de crear el
+nuevo. El registro anterior no se elimina: queda disponible como historial con
+`is_current = false`. El contador `relocated_from_other_clubs` permite revisar
+estos casos en la vista previa.
+El resultado separa altas, regresos, bajas, jugadores sin cambios y cedidos que deben conservarse. Después de revisar esa comparación, la misma instantánea puede aplicarse explícitamente:
+
+```powershell
+docker compose --profile tools run --rm etl sync-live-squad --club-id 1234 --apply
+```
+
+Si el club no puede identificarse automáticamente, se pueden consultar candidatos y proporcionar el identificador elegido:
+
+```powershell
+docker compose --profile tools run --rm etl find-live-clubs --search Independiente --country Argentina
+docker compose --profile tools run --rm etl sync-live-squad --club-id 1234 --provider-team-id ID_ENCONTRADO
+```
+
+API-Football se consulta solo durante el ETL. La API web y el frontend continúan leyendo exclusivamente PostgreSQL.
+
 Pruebas del importador:
 
 ```powershell

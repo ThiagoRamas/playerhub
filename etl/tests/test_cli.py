@@ -45,6 +45,17 @@ class CliTest(unittest.TestCase):
         self.assertEqual(args.batch_size, 10)
         self.assertEqual(args.max_clubs, 3)
 
+    def test_live_squad_defaults_to_preview(self) -> None:
+        args = build_parser().parse_args(
+            ["sync-live-squad", "--club-id", "1234", "--provider-team-id", "99"]
+        )
+        self.assertFalse(args.apply)
+        self.assertEqual(args.provider_team_id, 99)
+
+    def test_live_squad_apply_is_explicit(self) -> None:
+        args = build_parser().parse_args(["sync-live-squad", "--club-id", "1234", "--apply"])
+        self.assertTrue(args.apply)
+
 
 if __name__ == "__main__":
     unittest.main()
