@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ClubView, { type ClubDetail, type SquadMember } from "../../components/club-view";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_URL } from "../../lib/config";
 
 export default function ClubPage() {
   const params = useParams();

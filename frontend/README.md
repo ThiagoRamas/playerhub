@@ -1,6 +1,11 @@
 # Interfaz web de PlayerHub
 
-Aplicación web en español para explorar clubes, planteles y situaciones contractuales. Consume la API local de PlayerHub mediante `NEXT_PUBLIC_API_URL`.
+Aplicación web en español para explorar clubes, planteles y situaciones contractuales. En desarrollo consume la API configurada mediante `NEXT_PUBLIC_API_URL`; en producción usa la API pública de PlayerHub como respaldo seguro.
+
+## Demo pública
+
+- Aplicación: https://playerhub-thiagoramas.tramascai.chatgpt.site
+- API: https://playerhub-oac3.onrender.com/docs
 
 ## Desarrollo
 

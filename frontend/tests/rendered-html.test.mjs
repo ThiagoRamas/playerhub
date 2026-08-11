@@ -159,3 +159,23 @@ test("muestra cobertura real de la base en la portada", async () => {
   assert.match(home, /platformStats\.clubs/);
   assert.doesNotMatch(home, /<strong>23<\/strong>/);
 });
+
+test("usa las direcciones publicas fuera del entorno local", async () => {
+  const [config, layout, home, clubs, club, players, player] = await Promise.all([
+    readFile(new URL("../app/lib/config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/clubes/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/jugadores/[id]/page.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(config, /https:\/\/playerhub-oac3\.onrender\.com/);
+  assert.doesNotMatch(config, /localhost:8000/);
+  assert.match(layout, /https:\/\/playerhub-thiagoramas\.tramascai\.chatgpt\.site/);
+  for (const page of [home, clubs, club, players, player]) {
+    assert.match(page, /import \{ API_URL \}/);
+    assert.doesNotMatch(page, /localhost:8000/);
+  }
+});

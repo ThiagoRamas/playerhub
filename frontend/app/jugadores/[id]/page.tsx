@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { API_URL } from "../../lib/config";
 import { translateCountry } from "../../lib/translations";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 type PlayerClub = { id: number; name: string; membership_type: string; is_current: boolean };
 type Player = {

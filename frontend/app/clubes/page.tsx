@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatClubDataDate, type ClubSummary } from "../components/club-view";
+import { API_URL } from "../lib/config";
 import { translateCountry } from "../lib/translations";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 function normalized(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");

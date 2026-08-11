@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://playerhub-thiagoramas.tramascai.chatgpt.site",
+  ),
   title: "PlayerHub | Datos de fútbol, jugador por jugador",
   description: "Explorá planteles, préstamos, trayectorias y valores de mercado en PlayerHub.",
   openGraph: {

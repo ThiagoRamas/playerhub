@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { API_URL } from "../lib/config";
 import { translateCountry } from "../lib/translations";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 type PlayerSummary = {
   id: number;

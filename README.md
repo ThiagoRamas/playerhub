@@ -8,7 +8,14 @@ fuentes vigentes en una base PostgreSQL propia, expone los datos mediante una
 API REST y los presenta en una interfaz responsive.
 
 **Estado:** MVP funcional y validado · Cobertura inicial de Argentina · Datos
-vigentes de Independiente y River Plate al 11 de agosto de 2026.
+vigentes de Independiente y River Plate al 11 de agosto de 2026 · Publicado en
+producción.
+
+## Demo en vivo
+
+- [Abrir PlayerHub](https://playerhub-thiagoramas.tramascai.chatgpt.site)
+- [Explorar la API](https://playerhub-oac3.onrender.com/docs)
+- [Consultar las estadísticas de cobertura](https://playerhub-oac3.onrender.com/api/v1/stats)
 
 ## Qué se puede hacer
 
@@ -54,7 +61,7 @@ flowchart LR
 
 - 38 pruebas del ETL.
 - 6 pruebas de integración de la API.
-- 9 pruebas de compilación y renderizado del frontend.
+- 10 pruebas de compilación y renderizado del frontend.
 - Dos cargas consecutivas verificadas sin duplicados para datos históricos.
 - Sincronizaciones vigentes auditadas para Independiente y River Plate, con 0
   filas rechazadas y fuentes oficiales registradas.

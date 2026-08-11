@@ -2,9 +2,8 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import ClubView, { type ClubDetail, type ClubSummary, type SquadMember } from "./components/club-view";
+import { API_URL } from "./lib/config";
 import { translateCountry } from "./lib/translations";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 type PlatformStats = {
   clubs: number;
