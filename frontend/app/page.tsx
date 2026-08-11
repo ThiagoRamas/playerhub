@@ -145,7 +145,7 @@ export default function Home() {
 
       <footer>
         <a className="brand footer-brand" href="#inicio"><span className="brand-mark">PH</span><span>PlayerHub</span></a>
-        <p>Información futbolística clara, propia y trazable.</p><span>Versión piloto · Argentina</span>
+        <p>Información futbolística clara, propia y trazable.</p><span>Argentina · Actualización gradual</span>
       </footer>
     </main>
   );

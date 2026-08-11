@@ -23,6 +23,8 @@ test("renderiza la portada de PlayerHub en español", async () => {
   assert.match(html, /PlayerHub/);
   assert.match(html, /El fútbol, jugador por jugador/);
   assert.match(html, /Buscá un club/);
+  assert.match(html, /Argentina · Actualización gradual/);
+  assert.doesNotMatch(html, /Versión piloto/);
   assert.doesNotMatch(html, /codex-preview/);
 });
 

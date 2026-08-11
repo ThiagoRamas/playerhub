@@ -1,22 +1,76 @@
 # PlayerHub
 
-PlayerHub es una plataforma de análisis de futbolistas y clubes construida sobre un modelo de datos propio. Los CSV de origen se procesan mediante un ETL y nunca son consultados directamente por la aplicación.
+![PlayerHub: el fútbol, jugador por jugador](frontend/public/og.png)
 
-El idioma de la aplicación es español. Los códigos internos y los nombres de campos de la API se mantienen estables en inglés, pero la interfaz, los mensajes para usuarios y la documentación funcional se presentan en español.
+PlayerHub es una plataforma web en español para explorar clubes, planteles y
+trayectorias de futbolistas. El proyecto transforma archivos históricos y
+fuentes vigentes en una base PostgreSQL propia, expone los datos mediante una
+API REST y los presenta en una interfaz responsive.
 
-## Arquitectura objetivo
+**Estado:** MVP funcional y validado · Cobertura inicial de Argentina · Datos
+vigentes de Independiente y River Plate al 11 de agosto de 2026.
 
-```text
-Dataset → ETL Python → PostgreSQL → FastAPI → React
+## Qué se puede hacer
+
+- Buscar entre más de 80 clubes argentinos y más de 1.000 futbolistas.
+- Consultar planteles, jugadores propios, incorporados a préstamo y cedidos.
+- Abrir perfiles con rendimiento, valores de mercado, transferencias y lesiones.
+- Distinguir información vigente de cortes históricos mediante fecha y fuente.
+- Actualizar planteles en lotes seguros sin duplicar ni borrar el historial.
+
+## Por qué es un proyecto de datos, no sólo una interfaz
+
+- Los CSV son fuentes de importación: la aplicación nunca depende de leerlos en
+  cada consulta.
+- El ETL es idempotente, registra inserciones y actualizaciones y conserva la
+  trazabilidad de cada archivo o fuente externa.
+- Las sincronizaciones actuales comienzan con una vista previa y se bloquean si
+  un jugador nuevo tiene una identidad abreviada o ambigua.
+- Los préstamos vigentes se preservan y las bajas se cierran sin eliminar el
+  historial anterior.
+- Cada club informa la fecha de corte para no presentar datos históricos como
+  si fueran actuales.
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+    CSV[Dataset histórico] --> ETL[ETL Python]
+    LIVE[API-Football y fuentes oficiales] --> ETL
+    ETL --> DB[(PostgreSQL)]
+    DB --> API[FastAPI]
+    API --> WEB[React / Vinext]
 ```
 
-## Estado
+| Capa | Tecnologías | Responsabilidad |
+| --- | --- | --- |
+| Datos | PostgreSQL 16 | Modelo relacional, historial y trazabilidad |
+| Importación | Python 3.12 | Normalización, deduplicación y cargas incrementales |
+| API | FastAPI + psycopg | Búsqueda, planteles, perfiles e historiales |
+| Web | React 19 + Vinext | Experiencia responsive completamente en español |
+| Entorno | Docker Compose | Ejecución reproducible de todos los servicios |
 
-- Auditoría inicial del dataset completada.
-- Modelo de dominio documentado.
-- Esquema lógico PostgreSQL diseñado.
-- Primera migración disponible.
-- El ETL piloto, la API y la primera interfaz web se encuentran implementados.
+## Calidad verificada
+
+- 38 pruebas del ETL.
+- 6 pruebas de integración de la API.
+- 9 pruebas de compilación y renderizado del frontend.
+- Dos cargas consecutivas verificadas sin duplicados para datos históricos.
+- Sincronizaciones vigentes auditadas para Independiente y River Plate, con 0
+  filas rechazadas y fuentes oficiales registradas.
+
+## Inicio rápido
+
+Requisito: Docker Desktop. Después de crear `.env` a partir de `.env.example`:
+
+```powershell
+docker compose up -d --build database backend frontend
+```
+
+La aplicación queda en `http://localhost:3000` y la documentación interactiva
+de la API en `http://localhost:8000/docs`.
+
+## Referencia técnica
 
 ## Base de datos local
 
